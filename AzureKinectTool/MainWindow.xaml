@@ -1,0 +1,417 @@
+﻿<mah:MetroWindow x:Class="AzureKinectTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d"
+        Title="Azure Kinect Tool"
+        Height="720" Width="1200">
+
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <Button Click="SI_Setting" ToolTip="Subject Information Setting">
+                <iconPacks:BootstrapIcons Width="22" Height="22" Kind="PersonCircle" />
+            </Button>
+
+            <Button Click="AK_Setting" ToolTip="Azure Kinect Setting">
+                <iconPacks:BootstrapIcons Width="22" Height="22" Kind="Gear" />
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+
+    <mah:MetroWindow.Flyouts>
+        <mah:FlyoutsControl>
+            <mah:Flyout Name="SI_Menu" Header="Information" Position="Right" Width="250">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                    <StackPanel Margin="10">
+                        <GroupBox Header="Location" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                            <GroupBox.Resources>
+                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                            </GroupBox.Resources>
+                            <ComboBox Name="LocationBox">
+                                <ComboBoxItem Content="Center" IsSelected="True"/>
+                                <ComboBoxItem Content="Hospital"/>
+                            </ComboBox>
+                        </GroupBox>
+                        <GroupBox Header="ID" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                            <GroupBox.Resources>
+                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                            </GroupBox.Resources>
+                            <TextBox Name="IDBox" Text="----"
+                                     MaxLength="4"
+                                     controls:TextBoxHelper.ClearTextButton="True"
+                                     PreviewTextInput="IntegerInput"/>
+                        </GroupBox>
+                        <GroupBox Header="Level" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                            <GroupBox.Resources>
+                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                            </GroupBox.Resources>
+                            <mah:NumericUpDown Name="GLNUD" Value="1" Minimum="1" Maximum="6" Interval="1"/>
+                        </GroupBox>
+                        <GroupBox Header="Stage" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                            <GroupBox.Resources>
+                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                            </GroupBox.Resources>
+                            <mah:NumericUpDown Name="GSNUD" Value="1" Minimum="1" Maximum="3" Interval="1"/>
+                        </GroupBox>
+                        <GroupBox Header="Storage" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                            <GroupBox.Resources>
+                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                            </GroupBox.Resources>
+                            <StackPanel Orientation="Horizontal" Margin="10"
+                                        HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Name="SDText"
+                                           Text="D:\"
+                                           HorizontalAlignment="Left"
+                                           Width="130"
+                                           FontSize="14"/>
+                                <Button Name="SSButton"
+                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                        Height="33" Width="33"
+                                        Background="SkyBlue"
+                                        Click="SSButton_Click"
+                                        ToolTip="Select Storage">
+                                    <iconPacks:BootstrapIcons Kind="Hdd"/>
+                                </Button>
+                            </StackPanel>
+                        </GroupBox>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Margin="0,10,0,0">
+                            <ProgressBar Name="DriveBar" Width="150" Height="10"/>
+                            <Button Name="SCButton"
+                                    Margin="30,0,0,0"
+                                    Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                    Height="33" Width="33"
+                                    Background="SkyBlue"
+                                    Click="SCButton_Click"
+                                    ToolTip="Check Storage Free Space">
+                                <iconPacks:BootstrapIcons Kind="ArrowRepeat"/>
+                            </Button>
+                        </StackPanel>
+                        <Button Name="ICButton"
+                                Margin="180,15,0,0"
+                                Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                Height="33" Width="33"
+                                Background="SkyBlue"
+                                Click="ICButton_Click"
+                                ToolTip="Confirm Subject Information">
+                            <iconPacks:BootstrapIcons Kind="CheckLg"/>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </mah:Flyout>
+
+            <mah:Flyout Name="AK_Menu" Header="Settings" Position="Right" Width="250">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                    <StackPanel Margin="10">
+                        <TabControl Style="{DynamicResource MahApps.Styles.TabControl.Animated}">
+                            <TabItem Header="Sensor">
+                                <StackPanel>
+                                    <GroupBox Header="Azure Kinect" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <StackPanel Orientation="Horizontal" Margin="10"
+                                                    HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="Device Count : "
+                                                       HorizontalAlignment="Left"
+                                                       Width="130"
+                                                       FontSize="14"/>
+                                            <TextBlock Name="KCText"
+                                                       Text="0"
+                                                       HorizontalAlignment="Left"
+                                                       Width="130"
+                                                       FontSize="14"/>
+                                            <Button Name="KCButton"
+                                                    Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                                    Height="33" Width="33"
+                                                    Background="SkyBlue"
+                                                    Click="KCButton_Click"
+                                                    ToolTip="Check Connected Azure Kinect Count">
+                                                <iconPacks:BootstrapIcons Kind="Hdd"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </GroupBox>
+                                    <GroupBox Header="Depth Mode" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="DMBox">
+                                            <ComboBoxItem Content="NFOV 2x2Binned"/>
+                                            <ComboBoxItem Content="NFOV UnBinned" IsSelected="True"/>
+                                            <ComboBoxItem Content="WFOV 2x2Binned"/>
+                                            <ComboBoxItem Content="WFOV UnBinned"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                    <GroupBox Header="Color Format" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="CFBox">
+                                            <ComboBoxItem Content="BGRA" IsSelected="True"/>
+                                            <ComboBoxItem Content="MJPG" IsEnabled="False"/>
+                                            <ComboBoxItem Content="NV12" IsEnabled="False"/>
+                                            <ComboBoxItem Content="YUY2" IsEnabled="False"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                    <GroupBox Header="Color Resolution" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="CRBox">
+                                            <ComboBoxItem Content="720P (16:9)"/>
+                                            <ComboBoxItem Content="1080P (16:9)"/>
+                                            <ComboBoxItem Content="1440P (16:9)"/>
+                                            <ComboBoxItem Content="1536P (4:3)" IsSelected="True"/>
+                                            <ComboBoxItem Content="2160P (16:9)"/>
+                                            <ComboBoxItem Content="3072P (4:3)"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                    <GroupBox Header="Frame Rate" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="FRBox">
+                                            <ComboBoxItem Content="5 FPS"/>
+                                            <ComboBoxItem Content="15 FPS" IsSelected="True"/>
+                                            <ComboBoxItem Content="30 FPS"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                </StackPanel>
+                            </TabItem>
+                            <TabItem Header="Tracker">
+                                <StackPanel>
+                                    <GroupBox Header="Tracker Mode" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="TMBox">
+                                            <ComboBoxItem Content="CPU"/>
+                                            <ComboBoxItem Content="CUDA" IsSelected="True"/>
+                                            <ComboBoxItem Content="DirectML(Windows Only)"/>
+                                            <ComboBoxItem Content="GPU"/>
+                                            <ComboBoxItem Content="TensorRT" IsEnabled="False"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                    <GroupBox Header="Tracker Model" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="OMBox">
+                                            <ComboBoxItem Content="Default" IsSelected="True"/>
+                                            <ComboBoxItem Content="Lite"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                    <GroupBox Header="Sensor Orientation" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <ComboBox Name="SOBox">
+                                            <ComboBoxItem Content="Default" IsSelected="True"/>
+                                            <ComboBoxItem Content="ClockWise (90)"/>
+                                            <ComboBoxItem Content="Flip (180)"/>
+                                            <ComboBoxItem Content="CounterClockWise (-90)"/>
+                                        </ComboBox>
+                                    </GroupBox>
+                                    <GroupBox Header="GPU Device" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <StackPanel Orientation="Horizontal" Margin="10"
+                                                    HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="GPU ID : "
+                                                       HorizontalAlignment="Left"
+                                                       Width="100"
+                                                       FontSize="14"/>
+                                            <mah:NumericUpDown Name="GINUD" Value="0" Minimum="0" Interval="1"/>
+                                        </StackPanel>
+                                    </GroupBox>
+                                </StackPanel>
+                            </TabItem>
+                            <TabItem Header="Save">
+                                <StackPanel>
+                                    <mah:ToggleSwitch Name="SCSwitch" IsOn="True" Toggled="SCSwitch_Toggled"
+                                                      OnContent="Activate"
+                                                      OffContent="DeActivate"/>
+                                    
+                                    <GroupBox Header="Data Save Check" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+
+                                        <StackPanel Margin="5">
+                                            <mah:ToggleSwitch Name="CISwitch" IsOn="True"
+                                                              Content="Color Image"/>
+                                            <mah:ToggleSwitch Name="DISwitch" IsOn="True"
+                                                              Content="Depth Image"/>
+                                            <mah:ToggleSwitch Name="IISwitch" IsOn="True"
+                                                              Content="IR Image"/>
+                                            <mah:ToggleSwitch Name="JDSwitch" IsOn="True"
+                                                              Content="Joint Data"/>
+                                            <mah:ToggleSwitch Name="CVSwitch" IsOn="True"
+                                                              Content="Color Video"/>
+                                        </StackPanel>
+
+                                    </GroupBox>
+                                </StackPanel>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </mah:Flyout>
+        </mah:FlyoutsControl>
+    </mah:MetroWindow.Flyouts>
+
+    <Viewbox Stretch="Fill">
+        <StackPanel Orientation="Vertical">
+            <!-- Image View -->
+            <Border BorderBrush="SkyBlue" BorderThickness="2">
+                <Grid Height="600">
+                    <StackPanel Orientation="Horizontal">
+                        <Border BorderBrush="SkyBlue" BorderThickness="2">
+                            <StackPanel Width="594" Height="594" Orientation="Vertical">
+                                <StackPanel Width="594" Height="400">
+                                    <Viewbox Width="594" Height="400"
+                                             VerticalAlignment="Center">
+                                        <Image Name="KImage_1" Stretch="Uniform" Width="500" Height="300"/>
+                                    </Viewbox>
+                                </StackPanel>
+                                <StackPanel Width="574" Height="194">
+                                    <GroupBox Header="Azure Kinect Information"
+                                              Margin="0,100,0,0"
+                                              Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <StackPanel Orientation="Vertical">
+                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
+                                                <TextBlock Text="Sync Mode : "
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Name="SyncText_1" Text="Offline"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
+                                                <TextBlock Text="Location : "
+                                                           VerticalAlignment="Center"/>
+                                                <ComboBox Name="KLocationBox_1">
+                                                    <ComboBoxItem Content="Front" IsSelected="True"/>
+                                                    <ComboBoxItem Content="Left"/>
+                                                    <ComboBoxItem Content="Right"/>
+                                                </ComboBox>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </GroupBox>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border BorderBrush="SkyBlue" BorderThickness="2">
+                            <StackPanel Width="594" Height="594" Orientation="Vertical">
+                                <StackPanel Width="594" Height="400">
+                                    <Viewbox Width="594" Height="400"
+                                             VerticalAlignment="Center">
+                                        <Image Name="KImage_2" Stretch="Uniform" Width="500" Height="300"/>
+                                    </Viewbox>
+                                </StackPanel>
+                                <StackPanel Width="574" Height="194">
+                                    <GroupBox Header="Azure Kinect Information"
+                                              Margin="0,100,0,0"
+                                              Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <StackPanel Orientation="Vertical">
+                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
+                                                <TextBlock Text="Sync Mode : "
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Name="SyncText_2" Text="Offline"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
+                                                <TextBlock Text="Location : "
+                                                           VerticalAlignment="Center"/>
+                                                <ComboBox Name="KLocationBox_2">
+                                                    <ComboBoxItem Content="Front" IsSelected="True"/>
+                                                    <ComboBoxItem Content="Left"/>
+                                                    <ComboBoxItem Content="Right"/>
+                                                </ComboBox>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </GroupBox>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <Grid Height="104">
+                <StackPanel Orientation="Horizontal">
+                    <!-- System Log -->
+                    <Grid Width="950">
+                        <GroupBox Header="System Log">
+                            <StackPanel Orientation="Horizontal">
+                                <Border BorderBrush="SkyBlue" BorderThickness="2">
+                                    <ListBox Name="LListBox" Width="900">
+
+                                    </ListBox>
+                                </Border>
+                                <StackPanel Orientation="Vertical"
+                                            VerticalAlignment="Center">
+                                    <Button Name="LRButton"
+                                            Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                            Margin="3,0,0,0"
+                                            Height="33" Width="33"
+                                            Background="SkyBlue"
+                                            Click="LRButton_Click">
+                                        <iconPacks:BootstrapIcons Kind="ArrowRepeat"/>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
+                    <!-- Record Timer -->
+                    <Grid Width="100">
+                        <GroupBox Header="Record Time">
+                            <TextBlock Name="TimeText"
+                                       Text="00:00:00"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="20"/>
+                        </GroupBox>
+                    </Grid>
+                    <!-- Azure Kinect Control -->
+                    <Grid Width="150">
+                        <GroupBox Header="Control">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Right">
+                                <Button Name="PWButton"
+                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                        Margin="0,-0,25,0"
+                                        Height="33" Width="33"
+                                        Background="LightCoral" Click="PWButton_Click">
+                                    <iconPacks:BootstrapIcons Kind="Power"/>
+                                </Button>
+                                <Button Name="RCButton"
+                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                        Margin="0,0,25,0"
+                                        Height="33" Width="33"
+                                        IsEnabled="False"
+                                        Background="Beige" Click="RCButton_Click">
+                                    <iconPacks:BootstrapIcons Kind="PlayFill"/>
+                                </Button>
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Viewbox>
+
+</mah:MetroWindow>
