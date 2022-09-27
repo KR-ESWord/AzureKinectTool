@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,6 +36,7 @@ namespace AzureKinectTool
         function.AKImageConvert AKImageConvert = new function.AKImageConvert();
         function.AKPower AKPower = new function.AKPower();
         function.AKTracker AKTracker = new function.AKTracker();
+        function.CocoCreater CocoCreater = new function.CocoCreater();
 
         public int init_device_cnt = 0;
         public ArrayList synctxt_list = new ArrayList();
@@ -56,7 +57,6 @@ namespace AzureKinectTool
             img_list.Add(KImage_2);
 
             init_device_cnt = Device.GetInstalledCount();
-            Logger(0, "Detect " + init_device_cnt.ToString() + " Device");
         }
 
         // Text Integer Input Event //
@@ -93,14 +93,6 @@ namespace AzureKinectTool
             }
         }
 
-        // Subject Information Setting //
-        private void SI_Setting(object sender, RoutedEventArgs e)
-        {
-            SI_Menu.IsOpen = true;
-
-            CheckStorageSpace();
-        }
-
         // Azure Kinect Setting //
         private void AK_Setting(object sender, RoutedEventArgs e)
         {
@@ -128,6 +120,7 @@ namespace AzureKinectTool
 
         // Confirm Subject Information //
         public int ic_flg = 0;
+        public string storage = "";
         public string trg_path = "";
         public string subject = "";
         public string date = "";
@@ -143,10 +136,13 @@ namespace AzureKinectTool
                 switch (plc_idx)
                 {
                     case 0:
-                        plc = "c";
+                        plc = "d";
                         break;
                     case 1:
                         plc = "h";
+                        break;
+                    case 2:
+                        plc = "s";
                         break;
                 }
                 string subject_id = IDBox.Text.PadLeft(4,'0');
@@ -166,7 +162,7 @@ namespace AzureKinectTool
                     string game_stage = GSNUD.Value.ToString();
                     game_info = game_level + game_stage;
 
-                    string storage = SDText.Text;
+                    storage = SDText.Text;
                     date = DateTime.Now.ToString("yyMMdd", CultureInfo.CurrentUICulture.DateTimeFormat);
 
                     // Set Basic Path
@@ -186,7 +182,6 @@ namespace AzureKinectTool
                         trg_path = game_path;
                         ic_flg = 1;
 
-                        Logger(0, "Subject Information modified");
                         _ = MessageBox.Show("Successfully modify Subject Information.");
                     }
                     else
@@ -238,27 +233,6 @@ namespace AzureKinectTool
             }
         }
 
-        // Log Text Add //
-        public void Logger(int log_case, string log_text)
-        {
-            switch(log_case)
-            {
-                case 0:
-                    LListBox.Items.Add("INFO >>> "+log_text);
-                    break;
-
-                case 1:
-                    LListBox.Items.Add("ERROR >>> " + log_text);
-                    break;
-            }
-        }
-
-        // Log Text Reset //
-        private void LRButton_Click(object sender, RoutedEventArgs e)
-        {
-            LListBox.Items.Clear();
-        }
-
         // Azure Kinect Power Control //
         public int sync_mode = 0;
         public int kp_flg = 0;
@@ -275,6 +249,14 @@ namespace AzureKinectTool
             {
                 // Azure Kinect Power ON
                 case 0:
+                    if (SCSwitch.IsOn)
+                    {
+                        ic_flg = ic_flg;
+                    }
+                    else
+                    {
+                        ic_flg = 1;
+                    }
                     switch (ic_flg)
                     {
                         case 0:
@@ -282,8 +264,6 @@ namespace AzureKinectTool
                             break;
 
                         case 1:
-
-                            Logger(0, "Azure Kinect Power ON");
                             kp_flg = 1;
 
                             // Device List 초기화 후 연결된 Kinect의 수 만큼 Power ON 수행
@@ -409,7 +389,6 @@ namespace AzureKinectTool
                     sync_mode = 0;
                     kp_flg = 0;
                     ic_flg = 0;
-                    Logger(0, "Azure Kinect Power OFF");
                     break;
             }
         }
@@ -425,6 +404,14 @@ namespace AzureKinectTool
             {
                 // Azure Kinect Record Start
                 case 0:
+                    if (SCSwitch.IsOn)
+                    {
+                        ic_flg = ic_flg;
+                    }
+                    else
+                    {
+                        ic_flg = 1;
+                    }
                     switch (ic_flg)
                     {
                         case 0:
@@ -432,7 +419,7 @@ namespace AzureKinectTool
                             break;
 
                         case 1:
-                            if (kinect_list.Count > 1 && KLocationBox_1.SelectedIndex == KLocationBox_2.SelectedIndex)
+                            if (SCSwitch.IsOn && kinect_list.Count > 1 && KLocationBox_1.SelectedIndex == KLocationBox_2.SelectedIndex)
                             {
                                 _ = MessageBox.Show("Azure Kinect Location is Duplicated!\nPlease set Azure Kinect Location!");
                             }
@@ -440,7 +427,6 @@ namespace AzureKinectTool
                             {
                                 kr_flg = 1;
                                 record_chk = true;
-                                Logger(0, "Azure Kinect Record Start");
 
                                 Task kinect_record_start = Task.Run(() => KinectRecordStart());
 
@@ -469,7 +455,10 @@ namespace AzureKinectTool
 
                     ic_flg = 0;
                     kr_flg = 0;
-                    Logger(0, "Azure Kinect Record Stop");
+
+                    // COCO Data Create Task
+                    Task coco_create = Task.Run(() => CocoCreater.CocoSet(storage, subject, date, game_info, capture_time_dict));
+
                     break;
             }
         }
@@ -477,9 +466,11 @@ namespace AzureKinectTool
         // Azure Kinect Record Start Function //
         public Stopwatch stop_watch = new Stopwatch();
         public int last_frame_num = 0;
+        public Dictionary<int, string> capture_time_dict = new Dictionary<int, string>();
         public void KinectRecordStart()
         {
             int k_cnt = kinect_list.Count;
+            capture_time_dict = new Dictionary<int, string>();
 
             if (sync_mode > 0 && k_cnt > 1)
             {
@@ -498,16 +489,20 @@ namespace AzureKinectTool
                     sb_loc_idx = sb_loc_combox.SelectedIndex;
                 }));
                 string sb_kinect_loc = "";
+                int sb_camera_id = 0;
                 switch (sb_loc_idx)
                 {
                     case 0:
                         sb_kinect_loc = "kf";
+                        sb_camera_id = 0;
                         break;
                     case 1:
                         sb_kinect_loc = "kl";
+                        sb_camera_id = 1;
                         break;
                     case 2:
                         sb_kinect_loc = "kr";
+                        sb_camera_id = 2;
                         break;
                 }
 
@@ -526,17 +521,20 @@ namespace AzureKinectTool
                     mt_loc_idx = mt_loc_combox.SelectedIndex;
                 }));
                 string mt_kinect_loc = "";
-
+                int mt_camera_id = 0;
                 switch (mt_loc_idx)
                 {
                     case 0:
                         mt_kinect_loc = "kf";
+                        mt_camera_id = 0;
                         break;
                     case 1:
                         mt_kinect_loc = "kl";
+                        mt_camera_id = 1;
                         break;
                     case 2:
                         mt_kinect_loc = "kr";
+                        mt_camera_id = 2;
                         break;
                 }
 
@@ -551,6 +549,7 @@ namespace AzureKinectTool
                 var sb_ji_path = "";
                 var mt_ji_path = "";
                 var cv_path = "";
+                var an_path = "";
                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
                     if (SCSwitch.IsOn)
@@ -578,8 +577,8 @@ namespace AzureKinectTool
                             string sb_serial_num = sb_kinect.SerialNum;
                             string mt_serial_num = mt_kinect.SerialNum;
 
-                            string sbk_calibration = AKCalibration.AKCalibrations(sb_serial_num, sb_calibration);
-                            string mtk_calibration = AKCalibration.AKCalibrations(mt_serial_num, mt_calibration);
+                            string sbk_calibration = AKCalibration.AKCalibrations(sb_camera_id, sb_kinect_loc, sb_serial_num, sb_calibration);
+                            string mtk_calibration = AKCalibration.AKCalibrations(mt_camera_id, mt_kinect_loc, mt_serial_num, mt_calibration);
                             AKDataSave.AKCalibration(sbk_calibration, sb_cal_path);
                             AKDataSave.AKCalibration(mtk_calibration, mt_cal_path);
                         }
@@ -675,6 +674,14 @@ namespace AzureKinectTool
                                 cv_dir.Create();
                             }
                         }
+
+                        // Set Annotation Path
+                        an_path = System.IO.Path.Combine(trg_path, "7_annotation");
+                        DirectoryInfo an_dir = new DirectoryInfo(an_path);
+                        if (!an_dir.Exists)
+                        {
+                            an_dir.Create();
+                        }
                     }
                 }));
 
@@ -689,6 +696,9 @@ namespace AzureKinectTool
                     TimeSpan time_span = stop_watch.Elapsed;
                     string elapsed_time = string.Format("{0:00}:{1:00}.{2:00}",
                         time_span.Minutes, time_span.Seconds, time_span.Milliseconds / 10);
+
+                    string date_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentUICulture.DateTimeFormat);
+                    capture_time_dict.Add(frame_cnt, date_time);
 
                     Microsoft.Azure.Kinect.Sensor.Capture mt_capture = null;
                     Microsoft.Azure.Kinect.Sensor.Capture sb_capture = null;
@@ -726,6 +736,7 @@ namespace AzureKinectTool
                     );
                     if (mt_capture != null && sb_capture != null)
                     {
+                        string capture_time = DateTime.Now.ToString("yyMMdd_HHmmss_ffff", CultureInfo.CurrentUICulture.DateTimeFormat);
                         Parallel.Invoke(
                             () => {
                                 Microsoft.Azure.Kinect.Sensor.Image sb_cimg = sb_capture.Color;
@@ -887,7 +898,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string sb_annotation_json = Task.Run(() => AKTracker.PopTracker(sb_tracker,sb_calibration)).Result;
+                                            string sb_annotation_json = Task.Run(() => AKTracker.PopTracker(sb_camera_id, frame_cnt, sb_tracker, sb_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, sb_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -908,7 +919,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string mt_annotation_json = Task.Run(() => AKTracker.PopTracker(mt_tracker, mt_calibration)).Result;
+                                            string mt_annotation_json = Task.Run(() => AKTracker.PopTracker(mt_camera_id, frame_cnt, mt_tracker, mt_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, mt_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -951,22 +962,28 @@ namespace AzureKinectTool
                 var ii_path = "";
                 var ji_path = "";
                 var cv_path = "";
+                var an_path = "";
+                int cameras_id = 0;
                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
                     if (SCSwitch.IsOn)
                     {
                         ComboBox loc_combox = (ComboBox)loctxt_list[idx];
                         int loc_idx = loc_combox.SelectedIndex;
+                        
                         switch (loc_idx)
                         {
                             case 0:
                                 kinect_loc = "kf";
+                                cameras_id = 0;
                                 break;
                             case 1:
                                 kinect_loc = "kl";
+                                cameras_id = 1;
                                 break;
                             case 2:
                                 kinect_loc = "kr";
+                                cameras_id = 2;
                                 break;
                         }
 
@@ -987,7 +1004,7 @@ namespace AzureKinectTool
                         var cal_path = System.IO.Path.Combine(cd_path, cal_file);
                         string serial_num = kinect.SerialNum;
 
-                        string k_calibration = AKCalibration.AKCalibrations(serial_num, calibration);
+                        string k_calibration = AKCalibration.AKCalibrations(cameras_id, kinect_loc, serial_num, calibration);
                         AKDataSave.AKCalibration(k_calibration, cal_path);
 
                         // Set Color Path
@@ -1051,6 +1068,14 @@ namespace AzureKinectTool
                                 cv_dir.Create();
                             }
                         }
+                        
+                        // Set Annotation Path
+                        an_path = System.IO.Path.Combine(trg_path, "7_annotation");
+                        DirectoryInfo an_dir = new DirectoryInfo(an_path);
+                        if (!an_dir.Exists)
+                        {
+                            an_dir.Create();
+                        }
                     }
                 }));
 
@@ -1064,6 +1089,9 @@ namespace AzureKinectTool
                     TimeSpan time_span = stop_watch.Elapsed;
                     string elapsed_time = string.Format("{0:00}:{1:00}.{2:00}",
                         time_span.Minutes, time_span.Seconds, time_span.Milliseconds / 10);
+
+                    string date_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentUICulture.DateTimeFormat);
+                    capture_time_dict.Add(frame_cnt, date_time);
 
                     Microsoft.Azure.Kinect.Sensor.Capture capture = kinect.GetCapture();
                     _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
@@ -1167,7 +1195,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string annotation_json = Task.Run(() => AKTracker.PopTracker(tracker, calibration)).Result;
+                                            string annotation_json = Task.Run(() => AKTracker.PopTracker(cameras_id, frame_cnt, tracker, calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -1206,16 +1234,20 @@ namespace AzureKinectTool
                     k1_loc_idx = k1_loc_combox.SelectedIndex;
                 }));
                 string k1_kinect_loc = "";
+                int k1_camera_id = 0;
                 switch (k1_loc_idx)
                 {
                     case 0:
                         k1_kinect_loc = "kf";
+                        k1_camera_id = 0;
                         break;
                     case 1:
                         k1_kinect_loc = "kl";
+                        k1_camera_id = 1;
                         break;
                     case 2:
                         k1_kinect_loc = "kr";
+                        k1_camera_id = 2;
                         break;
                 }
 
@@ -1234,16 +1266,20 @@ namespace AzureKinectTool
                     k2_loc_idx = k2_loc_combox.SelectedIndex;
                 }));
                 string k2_kinect_loc = "";
+                int k2_camera_id = 0;
                 switch (k2_loc_idx)
                 {
                     case 0:
                         k2_kinect_loc = "kf";
+                        k2_camera_id = 0;
                         break;
                     case 1:
                         k2_kinect_loc = "kl";
+                        k2_camera_id = 1;
                         break;
                     case 2:
                         k2_kinect_loc = "kr";
+                        k2_camera_id = 2;
                         break;
                 }
 
@@ -1258,6 +1294,7 @@ namespace AzureKinectTool
                 var k1_ji_path = "";
                 var k2_ji_path = "";
                 var cv_path = "";
+                var an_path = "";
                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
                     if (SCSwitch.IsOn)
@@ -1285,8 +1322,8 @@ namespace AzureKinectTool
                             string k1_serial_num = k1_kinect.SerialNum;
                             string k2_serial_num = k2_kinect.SerialNum;
 
-                            string k1k_calibration = AKCalibration.AKCalibrations(k1_serial_num, k1_calibration);
-                            string k2k_calibration = AKCalibration.AKCalibrations(k2_serial_num, k2_calibration);
+                            string k1k_calibration = AKCalibration.AKCalibrations(k1_camera_id, k1_kinect_loc,k1_serial_num, k1_calibration);
+                            string k2k_calibration = AKCalibration.AKCalibrations(k2_camera_id, k2_kinect_loc, k2_serial_num, k2_calibration);
                             AKDataSave.AKCalibration(k1k_calibration, k1_cal_path);
                             AKDataSave.AKCalibration(k2k_calibration, k2_cal_path);
                         }
@@ -1382,6 +1419,14 @@ namespace AzureKinectTool
                                 cv_dir.Create();
                             }
                         }
+
+                        // Set Annotation Path
+                        an_path = System.IO.Path.Combine(trg_path, "7_annotation");
+                        DirectoryInfo an_dir = new DirectoryInfo(an_path);
+                        if (!an_dir.Exists)
+                        {
+                            an_dir.Create();
+                        }
                     }
                 }));
 
@@ -1394,6 +1439,9 @@ namespace AzureKinectTool
                     TimeSpan time_span = stop_watch.Elapsed;
                     string elapsed_time = string.Format("{0:00}:{1:00}.{2:00}",
                         time_span.Minutes, time_span.Seconds, time_span.Milliseconds / 10);
+
+                    string date_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentUICulture.DateTimeFormat);
+                    capture_time_dict.Add(frame_cnt, date_time);
 
                     Microsoft.Azure.Kinect.Sensor.Capture k1_capture = null;
                     Microsoft.Azure.Kinect.Sensor.Capture k2_capture = null;
@@ -1592,7 +1640,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string k1_annotation_json = Task.Run(() => AKTracker.PopTracker(k1_tracker, k1_calibration)).Result;
+                                            string k1_annotation_json = Task.Run(() => AKTracker.PopTracker(k1_camera_id, frame_cnt, k1_tracker, k1_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, k1_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -1613,7 +1661,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string k2_annotation_json = Task.Run(() => AKTracker.PopTracker(k2_tracker, k2_calibration)).Result;
+                                            string k2_annotation_json = Task.Run(() => AKTracker.PopTracker(k2_camera_id, frame_cnt, k2_tracker, k2_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, k2_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
