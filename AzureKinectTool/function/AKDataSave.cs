@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -93,6 +93,11 @@ namespace AzureKinectTool.function
 
             process.StandardInput.Write(create_video_cmd + Environment.NewLine);
             process.StandardInput.Close();
+        }
+
+        public void AKCaptureMeta()
+        {
+
         }
     }
 }
