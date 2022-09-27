@@ -1,4 +1,4 @@
-﻿<mah:MetroWindow x:Class="AzureKinectTool.MainWindow"
+<mah:MetroWindow x:Class="AzureKinectTool.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
@@ -15,10 +15,6 @@
 
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
-            <Button Click="SI_Setting" ToolTip="Subject Information Setting">
-                <iconPacks:BootstrapIcons Width="22" Height="22" Kind="PersonCircle" />
-            </Button>
-
             <Button Click="AK_Setting" ToolTip="Azure Kinect Setting">
                 <iconPacks:BootstrapIcons Width="22" Height="22" Kind="Gear" />
             </Button>
@@ -27,87 +23,6 @@
 
     <mah:MetroWindow.Flyouts>
         <mah:FlyoutsControl>
-            <mah:Flyout Name="SI_Menu" Header="Information" Position="Right" Width="250">
-                <ScrollViewer VerticalScrollBarVisibility="Hidden">
-                    <StackPanel Margin="10">
-                        <GroupBox Header="Location" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-                            <GroupBox.Resources>
-                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
-                            </GroupBox.Resources>
-                            <ComboBox Name="LocationBox">
-                                <ComboBoxItem Content="Center" IsSelected="True"/>
-                                <ComboBoxItem Content="Hospital"/>
-                            </ComboBox>
-                        </GroupBox>
-                        <GroupBox Header="ID" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-                            <GroupBox.Resources>
-                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
-                            </GroupBox.Resources>
-                            <TextBox Name="IDBox" Text="----"
-                                     MaxLength="4"
-                                     controls:TextBoxHelper.ClearTextButton="True"
-                                     PreviewTextInput="IntegerInput"/>
-                        </GroupBox>
-                        <GroupBox Header="Level" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-                            <GroupBox.Resources>
-                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
-                            </GroupBox.Resources>
-                            <mah:NumericUpDown Name="GLNUD" Value="1" Minimum="1" Maximum="6" Interval="1"/>
-                        </GroupBox>
-                        <GroupBox Header="Stage" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-                            <GroupBox.Resources>
-                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
-                            </GroupBox.Resources>
-                            <mah:NumericUpDown Name="GSNUD" Value="1" Minimum="1" Maximum="3" Interval="1"/>
-                        </GroupBox>
-                        <GroupBox Header="Storage" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
-                            <GroupBox.Resources>
-                                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
-                            </GroupBox.Resources>
-                            <StackPanel Orientation="Horizontal" Margin="10"
-                                        HorizontalAlignment="Left" VerticalAlignment="Center">
-                                <TextBlock Name="SDText"
-                                           Text="D:\"
-                                           HorizontalAlignment="Left"
-                                           Width="130"
-                                           FontSize="14"/>
-                                <Button Name="SSButton"
-                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
-                                        Height="33" Width="33"
-                                        Background="SkyBlue"
-                                        Click="SSButton_Click"
-                                        ToolTip="Select Storage">
-                                    <iconPacks:BootstrapIcons Kind="Hdd"/>
-                                </Button>
-                            </StackPanel>
-                        </GroupBox>
-                        <StackPanel Orientation="Horizontal"
-                                    VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Margin="0,10,0,0">
-                            <ProgressBar Name="DriveBar" Width="150" Height="10"/>
-                            <Button Name="SCButton"
-                                    Margin="30,0,0,0"
-                                    Style="{DynamicResource MahApps.Styles.Button.Circle}"
-                                    Height="33" Width="33"
-                                    Background="SkyBlue"
-                                    Click="SCButton_Click"
-                                    ToolTip="Check Storage Free Space">
-                                <iconPacks:BootstrapIcons Kind="ArrowRepeat"/>
-                            </Button>
-                        </StackPanel>
-                        <Button Name="ICButton"
-                                Margin="180,15,0,0"
-                                Style="{DynamicResource MahApps.Styles.Button.Circle}"
-                                Height="33" Width="33"
-                                Background="SkyBlue"
-                                Click="ICButton_Click"
-                                ToolTip="Confirm Subject Information">
-                            <iconPacks:BootstrapIcons Kind="CheckLg"/>
-                        </Button>
-                    </StackPanel>
-                </ScrollViewer>
-            </mah:Flyout>
-
             <mah:Flyout Name="AK_Menu" Header="Settings" Position="Right" Width="250">
                 <ScrollViewer VerticalScrollBarVisibility="Hidden">
                     <StackPanel Margin="10">
@@ -260,6 +175,43 @@
                                         </StackPanel>
 
                                     </GroupBox>
+
+                                    <GroupBox Header="Storage" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                        <GroupBox.Resources>
+                                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                        </GroupBox.Resources>
+                                        <StackPanel Orientation="Horizontal" Margin="10"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Name="SDText"
+                                                       Text="D:\"
+                                                       Margin="0,0,40,0"
+                                                       FontSize="14"/>
+                                            <Button Name="SSButton"
+                                                    Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                                    Height="33" Width="33"
+                                                    Background="SkyBlue"
+                                                    Click="SSButton_Click"
+                                                    Margin="40,0,0,0"
+                                                    ToolTip="Select Storage">
+                                                <iconPacks:BootstrapIcons Kind="Hdd"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </GroupBox>
+
+                                    <StackPanel Orientation="Horizontal"
+                                                VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                Margin="0,10,0,0">
+                                        <ProgressBar Name="DriveBar" Width="150" Height="10"/>
+                                        <Button Name="SCButton"
+                                                Margin="30,0,0,0"
+                                                Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                                Height="33" Width="33"
+                                                Background="SkyBlue"
+                                                Click="SCButton_Click"
+                                                ToolTip="Check Storage Free Space">
+                                            <iconPacks:BootstrapIcons Kind="ArrowRepeat"/>
+                                        </Button>
+                                    </StackPanel>
                                 </StackPanel>
                             </TabItem>
                         </TabControl>
@@ -354,24 +306,54 @@
                 <StackPanel Orientation="Horizontal">
                     <!-- System Log -->
                     <Grid Width="950">
-                        <GroupBox Header="System Log">
+                        <GroupBox Header="subject information">
                             <StackPanel Orientation="Horizontal">
-                                <Border BorderBrush="SkyBlue" BorderThickness="2">
-                                    <ListBox Name="LListBox" Width="900">
+                                <GroupBox Header="Location" Margin="100,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                    <GroupBox.Resources>
+                                        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                    </GroupBox.Resources>
+                                    <ComboBox Name="LocationBox" Width="150" Height="45" FontSize="22">
+                                        <ComboBoxItem Content="DHC" IsSelected="True" FontSize="22"/>
+                                        <ComboBoxItem Content="HMC" FontSize="22"/>
+                                        <ComboBoxItem Content="SMC" FontSize="22"/>
+                                    </ComboBox>
+                                </GroupBox>
+                                
+                                <GroupBox Header="ID" Margin="50,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                    <GroupBox.Resources>
+                                        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                    </GroupBox.Resources>
+                                    <TextBox Name="IDBox" Text="----"
+                                             Width="150" Height="45"
+                                             FontSize="25"
+                                             MaxLength="4"
+                                             controls:TextBoxHelper.ClearTextButton="True"
+                                             PreviewTextInput="IntegerInput"/>
+                                </GroupBox>
+                                
+                                <GroupBox Header="Level" Margin="50,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                    <GroupBox.Resources>
+                                        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                    </GroupBox.Resources>
+                                    <mah:NumericUpDown Name="GLNUD" Value="1" Minimum="1" Maximum="6" Interval="1" Width="150" Height="45"  FontSize="22"/>
+                                </GroupBox>
 
-                                    </ListBox>
-                                </Border>
-                                <StackPanel Orientation="Vertical"
-                                            VerticalAlignment="Center">
-                                    <Button Name="LRButton"
-                                            Style="{DynamicResource MahApps.Styles.Button.Circle}"
-                                            Margin="3,0,0,0"
-                                            Height="33" Width="33"
-                                            Background="SkyBlue"
-                                            Click="LRButton_Click">
-                                        <iconPacks:BootstrapIcons Kind="ArrowRepeat"/>
-                                    </Button>
-                                </StackPanel>
+                                <GroupBox Header="Stage" Margin="50,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                    <GroupBox.Resources>
+                                        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                    </GroupBox.Resources>
+                                    <mah:NumericUpDown Name="GSNUD" Value="1" Minimum="1" Maximum="3" Interval="1" Width="150" Height="45"  FontSize="22"/>
+                                </GroupBox>
+
+                                <Button Name="ICButton"
+                                        Margin="30,0,0,0"
+                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                        Height="33" Width="33"
+                                        Background="SkyBlue"
+                                        Click="ICButton_Click"
+                                        ToolTip="Confirm Subject Information">
+                                    <iconPacks:BootstrapIcons Kind="CheckLg"/>
+                                </Button>
                             </StackPanel>
                         </GroupBox>
                     </Grid>
