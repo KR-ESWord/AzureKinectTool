@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 // JSON
 using Newtonsoft.Json;
@@ -9,7 +9,7 @@ namespace AzureKinectTool.function
 {
     public class AKCalibration
     {
-        public string AKCalibrations(string serial_num, Calibration calibration)
+        public string AKCalibrations(int id, string kinect_loc, string serial_num, Calibration calibration)
         {
             Dictionary<string, object> main_dict = new Dictionary<string, object>();
 
@@ -30,11 +30,11 @@ namespace AzureKinectTool.function
                 ext_params_translation.Add(calibration.ColorCameraCalibration.Extrinsics.Translation[ext_t_idx]);
             }
 
-            ext_params_dict.Add("metric_radius", calibration.ColorCameraCalibration.MetricRadius.ToString());
-            ext_params_dict.Add("resolution_width", calibration.ColorCameraCalibration.ResolutionWidth.ToString());
-            ext_params_dict.Add("resolution_height", calibration.ColorCameraCalibration.ResolutionHeight.ToString());
             ext_params_dict.Add("rotation", ext_params_rotation);
             ext_params_dict.Add("translation", ext_params_translation);
+            ext_params_dict.Add("metric_radius", "1.7"); // calibration.ColorCameraCalibration.MetricRadius.ToString()
+            ext_params_dict.Add("resolution_width", calibration.ColorCameraCalibration.ResolutionWidth.ToString());
+            ext_params_dict.Add("resolution_height", calibration.ColorCameraCalibration.ResolutionHeight.ToString());
             ext_dict.Add("parameters", ext_params_dict);
 
             // Instrinsics
@@ -98,7 +98,7 @@ namespace AzureKinectTool.function
             ins_dict.Add("parameters", ins_params_dict);
 
             // Convert Mode
-            Dictionary<string, object> cm_dict = new Dictionary<string, object>();
+            ArrayList cm_list = new ArrayList();
             Dictionary<string, object> d2c_dict = new Dictionary<string, object>();
             Dictionary<string, object> d2g_dict = new Dictionary<string, object>();
             Dictionary<string, object> d2a_dict = new Dictionary<string, object>();
@@ -112,23 +112,12 @@ namespace AzureKinectTool.function
             Dictionary<string, object> a2c_dict = new Dictionary<string, object>();
             Dictionary<string, object> a2g_dict = new Dictionary<string, object>();
 
-            Dictionary<string, object> d2c_params = new Dictionary<string, object>();
-            Dictionary<string, object> d2g_params = new Dictionary<string, object>();
-            Dictionary<string, object> d2a_params = new Dictionary<string, object>();
-            Dictionary<string, object> c2d_params = new Dictionary<string, object>();
-            Dictionary<string, object> c2g_params = new Dictionary<string, object>();
-            Dictionary<string, object> c2a_params = new Dictionary<string, object>();
-            Dictionary<string, object> g2d_params = new Dictionary<string, object>();
-            Dictionary<string, object> g2c_params = new Dictionary<string, object>();
-            Dictionary<string, object> g2a_params = new Dictionary<string, object>();
-            Dictionary<string, object> a2d_params = new Dictionary<string, object>();
-            Dictionary<string, object> a2c_params = new Dictionary<string, object>();
-            Dictionary<string, object> a2g_params = new Dictionary<string, object>();
-
             // Depth to Color
             Extrinsics d2c_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Depth, (int)CalibrationDeviceType.Color);
             ArrayList d2c_params_rotation = GetExtRotation(d2c_ext);
             ArrayList d2c_params_translation = GetExtTranslation(d2c_ext);
+            d2c_dict.Add("convert_id", "d2c");
+            d2c_dict.Add("discription", "depth to color");
             d2c_dict.Add("rotation", d2c_params_rotation);
             d2c_dict.Add("translation", d2c_params_translation);
 
@@ -136,6 +125,8 @@ namespace AzureKinectTool.function
             Extrinsics d2g_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Depth, (int)CalibrationDeviceType.Gyro);
             ArrayList d2g_params_rotation = GetExtRotation(d2g_ext);
             ArrayList d2g_params_translation = GetExtTranslation(d2g_ext);
+            d2g_dict.Add("convert_id", "d2g");
+            d2g_dict.Add("discription", "depth to gyro");
             d2g_dict.Add("rotation", d2g_params_rotation);
             d2g_dict.Add("translation", d2g_params_translation);
 
@@ -143,6 +134,8 @@ namespace AzureKinectTool.function
             Extrinsics d2a_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Depth, (int)CalibrationDeviceType.Accel);
             ArrayList d2a_params_rotation = GetExtRotation(d2a_ext); ;
             ArrayList d2a_params_translation = GetExtTranslation(d2a_ext);
+            d2a_dict.Add("convert_id", "d2a");
+            d2a_dict.Add("discription", "depth to accel");
             d2a_dict.Add("rotation", d2a_params_rotation);
             d2a_dict.Add("translation", d2a_params_translation);
 
@@ -150,6 +143,8 @@ namespace AzureKinectTool.function
             Extrinsics c2d_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Color, (int)CalibrationDeviceType.Depth);
             ArrayList c2d_params_rotation = GetExtRotation(c2d_ext);
             ArrayList c2d_params_translation = GetExtTranslation(c2d_ext);
+            c2d_dict.Add("convert_id", "c2d");
+            c2d_dict.Add("discription", "color to depth");
             c2d_dict.Add("rotation", c2d_params_rotation);
             c2d_dict.Add("translation", c2d_params_translation);
 
@@ -157,6 +152,8 @@ namespace AzureKinectTool.function
             Extrinsics c2g_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Color, (int)CalibrationDeviceType.Gyro);
             ArrayList c2g_params_rotation = GetExtRotation(c2g_ext);
             ArrayList c2g_params_translation = GetExtTranslation(c2g_ext);
+            c2g_dict.Add("convert_id", "c2g");
+            c2g_dict.Add("discription", "color to gyro");
             c2g_dict.Add("rotation", c2g_params_rotation);
             c2g_dict.Add("translation", c2g_params_translation);
 
@@ -164,6 +161,8 @@ namespace AzureKinectTool.function
             Extrinsics c2a_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Color, (int)CalibrationDeviceType.Accel);
             ArrayList c2a_params_rotation = GetExtRotation(c2a_ext); ;
             ArrayList c2a_params_translation = GetExtTranslation(c2a_ext);
+            c2a_dict.Add("convert_id", "c2a");
+            c2a_dict.Add("discription", "color to accel");
             c2a_dict.Add("rotation", c2a_params_rotation);
             c2a_dict.Add("translation", c2a_params_translation);
 
@@ -171,6 +170,8 @@ namespace AzureKinectTool.function
             Extrinsics g2c_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Gyro, (int)CalibrationDeviceType.Color);
             ArrayList g2c_params_rotation = GetExtRotation(g2c_ext);
             ArrayList g2c_params_translation = GetExtTranslation(g2c_ext);
+            g2c_dict.Add("convert_id", "g2c");
+            g2c_dict.Add("discription", "gyro to color");
             g2c_dict.Add("rotation", g2c_params_rotation);
             g2c_dict.Add("translation", g2c_params_translation);
 
@@ -178,6 +179,8 @@ namespace AzureKinectTool.function
             Extrinsics g2d_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Gyro, (int)CalibrationDeviceType.Depth);
             ArrayList g2d_params_rotation = GetExtRotation(g2d_ext);
             ArrayList g2d_params_translation = GetExtTranslation(g2d_ext);
+            g2d_dict.Add("convert_id", "g2d");
+            g2d_dict.Add("discription", "gyro to depth");
             g2d_dict.Add("rotation", g2d_params_rotation);
             g2d_dict.Add("translation", g2d_params_translation);
 
@@ -185,6 +188,8 @@ namespace AzureKinectTool.function
             Extrinsics g2a_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Gyro, (int)CalibrationDeviceType.Accel);
             ArrayList g2a_params_rotation = GetExtRotation(g2a_ext); ;
             ArrayList g2a_params_translation = GetExtTranslation(g2a_ext);
+            g2a_dict.Add("convert_id", "g2a");
+            g2a_dict.Add("discription", "gyro to accel");
             g2a_dict.Add("rotation", g2a_params_rotation);
             g2a_dict.Add("translation", g2a_params_translation);
 
@@ -192,6 +197,8 @@ namespace AzureKinectTool.function
             Extrinsics a2c_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Accel, (int)CalibrationDeviceType.Color);
             ArrayList a2c_params_rotation = GetExtRotation(a2c_ext);
             ArrayList a2c_params_translation = GetExtTranslation(a2c_ext);
+            a2c_dict.Add("convert_id", "a2c");
+            a2c_dict.Add("discription", "accel to color");
             a2c_dict.Add("rotation", a2c_params_rotation);
             a2c_dict.Add("translation", a2c_params_translation);
 
@@ -199,6 +206,8 @@ namespace AzureKinectTool.function
             Extrinsics a2d_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Accel, (int)CalibrationDeviceType.Depth);
             ArrayList a2d_params_rotation = GetExtRotation(a2d_ext);
             ArrayList a2d_params_translation = GetExtTranslation(a2d_ext);
+            a2d_dict.Add("convert_id", "a2d");
+            a2d_dict.Add("discription", "accel to depth");
             a2d_dict.Add("rotation", a2d_params_rotation);
             a2d_dict.Add("translation", a2d_params_translation);
 
@@ -206,26 +215,30 @@ namespace AzureKinectTool.function
             Extrinsics a2g_ext = GetExtrinsics(calibration, (int)CalibrationDeviceType.Accel, (int)CalibrationDeviceType.Gyro);
             ArrayList a2g_params_rotation = GetExtRotation(a2g_ext); ;
             ArrayList a2g_params_translation = GetExtTranslation(a2g_ext);
+            a2g_dict.Add("convert_id", "a2g");
+            a2g_dict.Add("discription", "accel to gyro");
             a2g_dict.Add("rotation", a2g_params_rotation);
             a2g_dict.Add("translation", a2g_params_translation);
 
-            cm_dict.Add("depth2color", d2c_dict);
-            cm_dict.Add("depth2gyro", d2g_dict);
-            cm_dict.Add("depth2accel", d2a_dict);
-            cm_dict.Add("color2depth", c2d_dict);
-            cm_dict.Add("color2gyro", c2g_dict);
-            cm_dict.Add("color2accel", c2a_dict);
-            cm_dict.Add("gyro2color", g2d_dict);
-            cm_dict.Add("gyro2depth", g2c_dict);
-            cm_dict.Add("gyro2accel", g2a_dict);
-            cm_dict.Add("accel2color", a2d_dict);
-            cm_dict.Add("accel2depth", a2c_dict);
-            cm_dict.Add("accel2gyro", a2g_dict);
+            cm_list.Add(d2c_dict);
+            cm_list.Add(d2g_dict);
+            cm_list.Add(d2a_dict);
+            cm_list.Add(c2d_dict);
+            cm_list.Add(c2g_dict);
+            cm_list.Add(c2a_dict);
+            cm_list.Add(g2d_dict);
+            cm_list.Add(g2c_dict);
+            cm_list.Add(g2a_dict);
+            cm_list.Add(a2d_dict);
+            cm_list.Add(a2c_dict);
+            cm_list.Add(a2g_dict);
 
+            main_dict.Add("id", id);
+            main_dict.Add("location", kinect_loc);
             main_dict.Add("serial_number", serial_num);
             main_dict.Add("extrinsics", ext_dict);
             main_dict.Add("instrinsics", ins_dict);
-            main_dict.Add("convert_mode", cm_dict);
+            main_dict.Add("convert_mode", cm_list);
 
             string calibration_json = JsonConvert.SerializeObject(main_dict, Formatting.Indented);
 
