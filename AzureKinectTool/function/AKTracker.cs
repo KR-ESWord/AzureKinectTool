@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Globalization;
 // Azure Kinect SDK
 using Microsoft.Azure.Kinect.Sensor;
 using Microsoft.Azure.Kinect.BodyTracking;
@@ -15,12 +16,16 @@ namespace AzureKinectTool.function
 {
     public class AKTracker
     {
-        public string PopTracker(Tracker tracker, Calibration calibration)
+        public string PopTracker(int camera_id, int frame_num, Tracker tracker, Calibration calibration)
         {
-            Dictionary<string, object> annotation_dict = new Dictionary<string, object>();
+            Dictionary<string, object> trg_dict = new Dictionary<string, object>();
+            Dictionary<string, object> category_dict = new Dictionary<string, object>();
+            ArrayList category_arr = new ArrayList();
             ArrayList annotation_arr = new ArrayList();
+            ArrayList v_annotation_arr = new ArrayList();
 
-            Dictionary<string, object> id_dict = new Dictionary<string, object>();
+            // 이미지 정보에 삽입필요
+            //string date = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentUICulture.DateTimeFormat);
 
             Frame frame = tracker.PopResult();
 
@@ -69,14 +74,17 @@ namespace AzureKinectTool.function
                             target_chk = 0;
                         }
 
-                        id_dict.Add("id", id.ToString());
-                        id_dict.Add("target", target_chk.ToString());
-
+                        // Get Joint Data
                         Dictionary<int, object> position_2d_dict = new Dictionary<int, object>();
                         Dictionary<int, object> position_3d_dict = new Dictionary<int, object>();
-                        
-                        Dictionary<int, object> point_angle_dict = new Dictionary<int, object>();
-                        Dictionary<int, object> point_axies_dict = new Dictionary<int, object>();
+
+                        int key_chk_2d = 0;
+                        int key_chk_3d = 0;
+                        Dictionary<string, ArrayList> anno_keypoint = new Dictionary<string, ArrayList>();
+                        ArrayList keypoint_2d_list = new ArrayList();
+                        ArrayList keypoint_3d_list = new ArrayList();
+                        ArrayList keypoint_angle_list = new ArrayList();
+                        ArrayList keypoint_axies_list = new ArrayList();
                         for (int joint_idx = 0; joint_idx < Joint.Size; joint_idx++)
                         {
                             Joint joint = skeleton.GetJoint(joint_idx);
@@ -91,12 +99,20 @@ namespace AzureKinectTool.function
                                 position_2d_arr.Add((double)position_2d.Value.X);
                                 position_2d_arr.Add((double)position_2d.Value.Y);
 
-                                // Get 2D Angle Information
+                                keypoint_2d_list.Add((double)position_2d.Value.X);
+                                keypoint_2d_list.Add((double)position_2d.Value.Y);
+                                keypoint_2d_list.Add(2);
+
+                                key_chk_2d += 1;
                             }
                             else
                             {
                                 position_2d_arr.Add((double)0);
                                 position_2d_arr.Add((double)0);
+
+                                keypoint_2d_list.Add(0);
+                                keypoint_2d_list.Add(0);
+                                keypoint_2d_list.Add(0);
                             }
                             position_2d_dict.Add(joint_idx, position_2d_arr);
 
@@ -104,7 +120,6 @@ namespace AzureKinectTool.function
                                 CalibrationDeviceType.Depth,
                                 CalibrationDeviceType.Color);
                             ArrayList position_3d_arr = new ArrayList();
-                            Dictionary<string, object> angle_3d_value = new Dictionary<string, object>();
                             if (position_3d.HasValue)
                             {
                                 // Get 3D Position Information
@@ -112,10 +127,17 @@ namespace AzureKinectTool.function
                                 position_3d_arr.Add((double)position_3d.Value.Y);
                                 position_3d_arr.Add((double)position_3d.Value.Z);
 
+                                keypoint_3d_list.Add((double)position_3d.Value.X);
+                                keypoint_3d_list.Add((double)position_3d.Value.Y);
+                                keypoint_3d_list.Add((double)position_3d.Value.Z);
+                                keypoint_3d_list.Add(2);
+
                                 // Get 3D Angle Information
-                                angle_3d_value.Add("x", Calc3DXAngle(position_3d));
-                                angle_3d_value.Add("y", Calc3DYAngle(position_3d));
-                                angle_3d_value.Add("z", Calc3DZAngle(position_3d));
+                                keypoint_angle_list.Add(Calc3DXAngle(position_3d));
+                                keypoint_angle_list.Add(Calc3DYAngle(position_3d));
+                                keypoint_angle_list.Add(Calc3DZAngle(position_3d));
+
+                                key_chk_3d += 1;
                             }
                             else
                             {
@@ -123,15 +145,18 @@ namespace AzureKinectTool.function
                                 position_3d_arr.Add((double)0);
                                 position_3d_arr.Add((double)0);
 
-                                angle_3d_value.Add("x", 0);
-                                angle_3d_value.Add("y", 0);
-                                angle_3d_value.Add("z", 0);
+                                keypoint_3d_list.Add(0);
+                                keypoint_3d_list.Add(0);
+                                keypoint_3d_list.Add(0);
+                                keypoint_3d_list.Add(0);
+
+                                keypoint_angle_list.Add(0);
+                                keypoint_angle_list.Add(0);
+                                keypoint_angle_list.Add(0);
                             }
                             position_3d_dict.Add(joint_idx, position_3d_arr);
-                            point_angle_dict.Add(joint_idx, angle_3d_value);
 
                             // Get Position Axies Information
-                            Dictionary<string, object> axies_value = new Dictionary<string, object>();
                             double quaternion_x = joint.Quaternion.X;
                             double quaternion_y = joint.Quaternion.Y;
                             double quaternion_z = joint.Quaternion.Z;
@@ -140,89 +165,657 @@ namespace AzureKinectTool.function
                             double pitch = CalcPitch(quaternion_x, quaternion_y, quaternion_z, quaternion_w);
                             double yaw = CalcYaw(quaternion_x, quaternion_y, quaternion_z, quaternion_w);
                             double roll = CalcRoll(quaternion_x, quaternion_y, quaternion_z, quaternion_w);
-                            axies_value.Add("pitch",pitch);
-                            axies_value.Add("yaw",yaw);
-                            axies_value.Add("roll",roll);
-                            point_axies_dict.Add(joint_idx, axies_value);
+
+                            keypoint_axies_list.Add(yaw);
+                            keypoint_axies_list.Add(pitch);
+                            keypoint_axies_list.Add(roll);
                         }
 
-                        // Get 2D & 3D Vector Angle Information
-                        ArrayList vectors = VectorPair(position_2d_dict, position_3d_dict);
+                        // Get 2D & 3D Vector Angle Value
+                        Dictionary<string,ArrayList> vectors = VectorPair(position_2d_dict, position_3d_dict);
+                        ArrayList bbox_list = new ArrayList();
 
-                        id_dict.Add("position_2d", position_2d_dict);
-                        id_dict.Add("position_3d", position_3d_dict);
+                        Dictionary<string, object> id_dict = new Dictionary<string, object>();
+                        id_dict.Add("category_id", 1);
+                        id_dict.Add("id", frame_num);
+                        id_dict.Add("body_id", id.ToString());
+                        id_dict.Add("target", target_chk.ToString());
+                        id_dict.Add("iscrowd", 1);
+
+                        id_dict.Add("keypoints_2d", key_chk_2d);
+                        id_dict.Add("keypoints_3d", key_chk_3d);
+
+                        anno_keypoint.Add("2d", keypoint_2d_list);
+                        anno_keypoint.Add("3d", keypoint_3d_list);
+                        anno_keypoint.Add("3d_point_angle", keypoint_angle_list);
+                        anno_keypoint.Add("axies", keypoint_axies_list);
+                        id_dict.Add("keypoints", anno_keypoint);
+
                         id_dict.Add("vector_angle", vectors);
-                        id_dict.Add("point_3d_angle", point_angle_dict);
-                        id_dict.Add("point_axies", point_axies_dict);
+                        id_dict.Add("area", 0);
+                        id_dict.Add("bbox", bbox_list);
 
-                        annotation_arr.Add(id_dict);
+                        v_annotation_arr.Add(id_dict);
                     }
                 }
             }
             else
             {
-                id_dict.Add("id", "0");
-                id_dict.Add("target", target_chk.ToString());
+                Dictionary<string, ArrayList> anno_keypoint = new Dictionary<string, ArrayList>();
+                ArrayList keypoint_2d_list = new ArrayList();
+                ArrayList keypoint_3d_list = new ArrayList();
+                ArrayList keypoint_angle_list = new ArrayList();
+                ArrayList keypoint_axies_list = new ArrayList();
+                Dictionary<string, ArrayList> vectors = new Dictionary<string, ArrayList>();
+                ArrayList vector_2d_list = new ArrayList();
+                ArrayList vector_3d_list = new ArrayList();
+                ArrayList bbox_list = new ArrayList();
+                Dictionary<string, object> id_dict = new Dictionary<string, object>();
+                id_dict.Add("category_id", 1);
+                id_dict.Add("id", frame_num);
+                id_dict.Add("body_id", 0);
+                id_dict.Add("target", target_chk);
+                id_dict.Add("num_keypoints", 0);
+                id_dict.Add("iscrowd", 0);
 
-                id_dict.Add("position_2d", "");
-                id_dict.Add("position_3d", "");
-                id_dict.Add("vector_angle", "");
-                id_dict.Add("point_3d_angle", "");
-                id_dict.Add("point_axies", "");
+                anno_keypoint.Add("2d", keypoint_2d_list);
+                anno_keypoint.Add("3d", keypoint_3d_list);
+                anno_keypoint.Add("3d_point_angle", keypoint_angle_list);
+                anno_keypoint.Add("axies", keypoint_axies_list);
+                id_dict.Add("keypoints", anno_keypoint);
 
-                annotation_arr.Add(id_dict);
+                vectors.Add("2d", vector_2d_list);
+                vectors.Add("3d", vector_3d_list);
+                id_dict.Add("vector_angle", vectors);
+                id_dict.Add("area", 0);
+                id_dict.Add("bbox", bbox_list);
+
+                v_annotation_arr.Add(id_dict);
             }
 
             frame.Dispose();
 
-            Dictionary<int, string> description_dict = JointMap();
-            annotation_dict.Add("description", description_dict);
-            annotation_dict.Add("annotation", annotation_arr);
+            //coco - categories
+            List<string> description_dict = KeyPoint();
+            ArrayList skeleton_arr = SkeletonMap();
+            ArrayList vectorangle_arr = VectorAngleMap();
+            List<string> axies_list = AxiesList();
 
-            string annotation_json = JsonConvert.SerializeObject(annotation_dict, Formatting.Indented);
+            category_dict.Add("supercategory", "person");
+            category_dict.Add("id", 1);
+            category_dict.Add("name", "person");
+            category_dict.Add("keypoints", description_dict);
+            category_dict.Add("skeleton", skeleton_arr);
+            category_dict.Add("vector_angle", vectorangle_arr);
+            category_dict.Add("axies", axies_list);
+            category_arr.Add(category_dict);
+
+            // coco - annotation
+            Dictionary<string, object> trg_anno_dict = new Dictionary<string, object>();
+            trg_anno_dict.Add("camera_id", camera_id);
+            trg_anno_dict.Add("video_id", camera_id);
+            trg_anno_dict.Add("v_annotation", v_annotation_arr);
+            annotation_arr.Add(trg_anno_dict);
+
+            // categories & annotaion json
+            trg_dict.Add("categories", category_arr);
+            trg_dict.Add("annotations", annotation_arr);
+           
+            string annotation_json = JsonConvert.SerializeObject(trg_dict, Formatting.Indented);
 
             return annotation_json;
         }
 
-        // Joint Map Description
-        public Dictionary<int, string> JointMap()
+        // Key Point Categories
+        public List<string> KeyPoint()
         {
-            Dictionary<int, string> description_dict = new Dictionary<int, string>();
-            description_dict.Add(0, "pelvis");
-            description_dict.Add(1, "spine_naval");
-            description_dict.Add(2, "spine_chest");
-            description_dict.Add(3, "neck");
-            description_dict.Add(4, "clavicle_left");
-            description_dict.Add(5, "shoulder_left");
-            description_dict.Add(6, "elbow_left");
-            description_dict.Add(7, "wrist_left");
-            description_dict.Add(8, "hand_left");
-            description_dict.Add(9, "handtip_left");
-            description_dict.Add(10, "thumb_left");
-            description_dict.Add(11, "clavicle_right");
-            description_dict.Add(12, "shoulder_right");
-            description_dict.Add(13, "elbow_right");
-            description_dict.Add(14, "wrist_right");
-            description_dict.Add(15, "hand_right");
-            description_dict.Add(16, "handtip_right");
-            description_dict.Add(17, "thumb_right");
-            description_dict.Add(18, "hip_left");
-            description_dict.Add(19, "knee_left");
-            description_dict.Add(20, "ankle_left");
-            description_dict.Add(21, "foot_left");
-            description_dict.Add(22, "hip_right");
-            description_dict.Add(23, "knee_right");
-            description_dict.Add(24, "ankle_right");
-            description_dict.Add(25, "foot_right");
-            description_dict.Add(26, "head");
-            description_dict.Add(27, "nose");
-            description_dict.Add(28, "eye_left");
-            description_dict.Add(29, "ear_left");
-            description_dict.Add(30, "eye_right");
-            description_dict.Add(31, "ear_right");
+            List<string> keypoint_list = new List<string>();
+            keypoint_list.Add("pelvis");
+            keypoint_list.Add("spine_naval");
+            keypoint_list.Add("spine_chest");
+            keypoint_list.Add("neck");
+            keypoint_list.Add("clavicle_left");
+            keypoint_list.Add("shoulder_left");
+            keypoint_list.Add("elbow_left");
+            keypoint_list.Add("wrist_left");
+            keypoint_list.Add("hand_left");
+            keypoint_list.Add("handtip_left");
+            keypoint_list.Add("thumb_left");
+            keypoint_list.Add("clavicle_right");
+            keypoint_list.Add("shoulder_right");
+            keypoint_list.Add("elbow_right");
+            keypoint_list.Add("wrist_right");
+            keypoint_list.Add("hand_right");
+            keypoint_list.Add("handtip_right");
+            keypoint_list.Add("thumb_right");
+            keypoint_list.Add("hip_left");
+            keypoint_list.Add("knee_left");
+            keypoint_list.Add("ankle_left");
+            keypoint_list.Add("foot_left");
+            keypoint_list.Add("hip_right");
+            keypoint_list.Add("knee_right");
+            keypoint_list.Add("ankle_right");
+            keypoint_list.Add("foot_right");
+            keypoint_list.Add("head");
+            keypoint_list.Add("nose");
+            keypoint_list.Add("eye_left");
+            keypoint_list.Add("ear_left");
+            keypoint_list.Add("eye_right");
+            keypoint_list.Add("ear_right");
 
-            return description_dict;
+            return keypoint_list;
         }
+
+        // Skeleton Categories
+        public ArrayList SkeletonMap()
+        {
+            ArrayList skeleton = new ArrayList();
+            
+            List<int> s1 = new List<int>();
+            s1.Add(0);
+            s1.Add(1);
+            skeleton.Add(s1);
+
+            List<int> s2 = new List<int>();
+            s2.Add(1);
+            s2.Add(2);
+            skeleton.Add(s2);
+
+            List<int> s3 = new List<int>();
+            s3.Add(2);
+            s3.Add(3);
+            skeleton.Add(s3);
+
+            List<int> s4 = new List<int>();
+            s4.Add(2);
+            s4.Add(4);
+            skeleton.Add(s4);
+
+            List<int> s5 = new List<int>();
+            s5.Add(4);
+            s5.Add(5);
+            skeleton.Add(s5);
+
+            List<int> s6 = new List<int>();
+            s6.Add(5);
+            s6.Add(6);
+            skeleton.Add(s6);
+
+            List<int> s7 = new List<int>();
+            s7.Add(6);
+            s7.Add(7);
+            skeleton.Add(s7);
+
+            List<int> s8 = new List<int>();
+            s8.Add(7);
+            s8.Add(8);
+            skeleton.Add(s8);
+
+            List<int> s9 = new List<int>();
+            s9.Add(8);
+            s9.Add(9);
+            skeleton.Add(s9);
+
+            List<int> s10 = new List<int>();
+            s10.Add(7);
+            s10.Add(10);
+            skeleton.Add(s10);
+
+            List<int> s11 = new List<int>();
+            s11.Add(2);
+            s11.Add(11);
+            skeleton.Add(s11);
+
+            List<int> s12 = new List<int>();
+            s12.Add(11);
+            s12.Add(12);
+            skeleton.Add(s12);
+
+            List<int> s13 = new List<int>();
+            s13.Add(12);
+            s13.Add(13);
+            skeleton.Add(s13);
+
+            List<int> s14 = new List<int>();
+            s14.Add(13);
+            s14.Add(14);
+            skeleton.Add(s14);
+
+            List<int> s15 = new List<int>();
+            s15.Add(14);
+            s15.Add(15);
+            skeleton.Add(s15);
+
+            List<int> s16 = new List<int>();
+            s16.Add(15);
+            s16.Add(16);
+            skeleton.Add(s16);
+
+            List<int> s17 = new List<int>();
+            s17.Add(14);
+            s17.Add(17);
+            skeleton.Add(s17);
+
+            List<int> s18 = new List<int>();
+            s18.Add(0);
+            s18.Add(18);
+            skeleton.Add(s18);
+
+            List<int> s19 = new List<int>();
+            s19.Add(18);
+            s19.Add(19);
+            skeleton.Add(s19);
+
+            List<int> s20 = new List<int>();
+            s20.Add(19);
+            s20.Add(20);
+            skeleton.Add(s20);
+
+            List<int> s21 = new List<int>();
+            s21.Add(20);
+            s21.Add(21);
+            skeleton.Add(s21);
+
+            List<int> s22 = new List<int>();
+            s22.Add(0);
+            s22.Add(22);
+            skeleton.Add(s22);
+
+            List<int> s23 = new List<int>();
+            s23.Add(22);
+            s23.Add(23);
+            skeleton.Add(s23);
+
+            List<int> s24 = new List<int>();
+            s24.Add(23);
+            s24.Add(24);
+            skeleton.Add(s24);
+
+            List<int> s25 = new List<int>();
+            s25.Add(24);
+            s25.Add(25);
+            skeleton.Add(s25);
+
+            List<int> s26 = new List<int>();
+            s26.Add(3);
+            s26.Add(26);
+            skeleton.Add(s26);
+
+            List<int> s27 = new List<int>();
+            s27.Add(26);
+            s27.Add(27);
+            skeleton.Add(s27);
+
+            List<int> s28 = new List<int>();
+            s28.Add(26);
+            s28.Add(28);
+            skeleton.Add(s28);
+
+            List<int> s29 = new List<int>();
+            s29.Add(26);
+            s29.Add(29);
+            skeleton.Add(s29);
+
+            List<int> s30 = new List<int>();
+            s30.Add(26);
+            s30.Add(30);
+            skeleton.Add(s30);
+
+            List<int> s31 = new List<int>();
+            s31.Add(26);
+            s31.Add(31);
+            skeleton.Add(s31);
+
+            return skeleton;
+        }
+
+        // Vector Angle Categories
+        public ArrayList VectorAngleMap()
+        {
+            ArrayList vector_angle = new ArrayList();
+
+            List<int> v1 = new List<int>();
+            v1.Add(1);
+            v1.Add(0);
+            v1.Add(18);
+            vector_angle.Add(v1);
+
+            List<int> v2 = new List<int>();
+            v2.Add(1);
+            v2.Add(0);
+            v2.Add(22);
+            vector_angle.Add(v2);
+
+            List<int> v3 = new List<int>();
+            v3.Add(18);
+            v3.Add(0);
+            v3.Add(22);
+            vector_angle.Add(v3);
+
+            List<int> v4 = new List<int>();
+            v4.Add(0);
+            v4.Add(1);
+            v4.Add(2);
+            vector_angle.Add(v4);
+
+            List<int> v5 = new List<int>();
+            v5.Add(1);
+            v5.Add(2);
+            v5.Add(3);
+            vector_angle.Add(v5);
+
+            List<int> v6 = new List<int>();
+            v6.Add(1);
+            v6.Add(2);
+            v6.Add(4);
+            vector_angle.Add(v6);
+
+            List<int> v7 = new List<int>();
+            v7.Add(1);
+            v7.Add(2);
+            v7.Add(11);
+            vector_angle.Add(v7);
+
+            List<int> v8 = new List<int>();
+            v8.Add(4);
+            v8.Add(2);
+            v8.Add(3);
+            vector_angle.Add(v8);
+
+            List<int> v9 = new List<int>();
+            v9.Add(4);
+            v9.Add(2);
+            v9.Add(11);
+            vector_angle.Add(v9);
+
+            List<int> v10 = new List<int>();
+            v10.Add(3);
+            v10.Add(2);
+            v10.Add(11);
+            vector_angle.Add(v10);
+
+            List<int> v11 = new List<int>();
+            v11.Add(2);
+            v11.Add(3);
+            v11.Add(26);
+            vector_angle.Add(v11);
+
+            List<int> v12 = new List<int>();
+            v12.Add(2);
+            v12.Add(4);
+            v12.Add(5);
+            vector_angle.Add(v12);
+
+            List<int> v13 = new List<int>();
+            v13.Add(4);
+            v13.Add(5);
+            v13.Add(6);
+            vector_angle.Add(v13);
+
+            List<int> v14 = new List<int>();
+            v14.Add(5);
+            v14.Add(6);
+            v14.Add(7);
+            vector_angle.Add(v14);
+
+            List<int> v15 = new List<int>();
+            v15.Add(6);
+            v15.Add(7);
+            v15.Add(8);
+            vector_angle.Add(v15);
+
+            List<int> v16 = new List<int>();
+            v16.Add(6);
+            v16.Add(7);
+            v16.Add(10);
+            vector_angle.Add(v16);
+
+            List<int> v17 = new List<int>();
+            v17.Add(7);
+            v17.Add(8);
+            v17.Add(9);
+            vector_angle.Add(v17);
+
+            List<int> v18 = new List<int>();
+            v18.Add(2);
+            v18.Add(11);
+            v18.Add(12);
+            vector_angle.Add(v18);
+
+            List<int> v19 = new List<int>();
+            v19.Add(11);
+            v19.Add(12);
+            v19.Add(13);
+            vector_angle.Add(v19);
+
+            List<int> v20 = new List<int>();
+            v20.Add(12);
+            v20.Add(13);
+            v20.Add(14);
+            vector_angle.Add(v20);
+
+            List<int> v21 = new List<int>();
+            v21.Add(13);
+            v21.Add(14);
+            v21.Add(15);
+            vector_angle.Add(v21);
+
+            List<int> v22 = new List<int>();
+            v22.Add(13);
+            v22.Add(14);
+            v22.Add(17);
+            vector_angle.Add(v22);
+
+            List<int> v23 = new List<int>();
+            v23.Add(14);
+            v23.Add(15);
+            v23.Add(16);
+            vector_angle.Add(v23);
+
+            List<int> v24 = new List<int>();
+            v24.Add(0);
+            v24.Add(18);
+            v24.Add(19);
+            vector_angle.Add(v24);
+
+            List<int> v25 = new List<int>();
+            v25.Add(18);
+            v25.Add(19);
+            v25.Add(20);
+            vector_angle.Add(v25);
+
+            List<int> v26 = new List<int>();
+            v26.Add(19);
+            v26.Add(20);
+            v26.Add(21);
+            vector_angle.Add(v26);
+
+            List<int> v27 = new List<int>();
+            v27.Add(0);
+            v27.Add(22);
+            v27.Add(23);
+            vector_angle.Add(v27);
+
+            List<int> v28 = new List<int>();
+            v28.Add(22);
+            v28.Add(23);
+            v28.Add(24);
+            vector_angle.Add(v28);
+
+            List<int> v29 = new List<int>();
+            v29.Add(23);
+            v29.Add(24);
+            v29.Add(25);
+            vector_angle.Add(v29);
+
+            List<int> v30 = new List<int>();
+            v30.Add(3);
+            v30.Add(26);
+            v30.Add(27);
+            vector_angle.Add(v30);
+
+            List<int> v31 = new List<int>();
+            v31.Add(3);
+            v31.Add(26);
+            v31.Add(28);
+            vector_angle.Add(v31);
+
+            List<int> v32 = new List<int>();
+            v32.Add(3);
+            v32.Add(26);
+            v32.Add(29);
+            vector_angle.Add(v32);
+
+            List<int> v33 = new List<int>();
+            v33.Add(3);
+            v33.Add(26);
+            v33.Add(30);
+            vector_angle.Add(v33);
+
+            List<int> v34 = new List<int>();
+            v34.Add(3);
+            v34.Add(26);
+            v34.Add(31);
+            vector_angle.Add(v34);
+
+            return vector_angle;
+        }
+
+        // Axies Categories
+        public List<string> AxiesList()
+        {
+            List<string> axies_list = new List<string>();
+            axies_list.Add("pelvis_yaw");
+            axies_list.Add("pelvis_pitch");
+            axies_list.Add("pelvis_roll");
+            
+            axies_list.Add("spine_naval_yaw");
+            axies_list.Add("spine_naval_pitch");
+            axies_list.Add("spine_naval_roll");
+            
+            axies_list.Add("spine_chest_yaw");
+            axies_list.Add("spine_chest_pitch");
+            axies_list.Add("spine_chest_roll");
+            
+            axies_list.Add("neck_yaw");
+            axies_list.Add("neck_pitch");
+            axies_list.Add("neck_roll");
+            
+            axies_list.Add("clavicle_left_yaw");
+            axies_list.Add("clavicle_left_pitch");
+            axies_list.Add("clavicle_left_roll");
+            
+            axies_list.Add("shoulder_left_yaw");
+            axies_list.Add("shoulder_left_pitch");
+            axies_list.Add("shoulder_left_roll");
+
+            axies_list.Add("elbow_left_yaw");
+            axies_list.Add("elbow_left_pitch");
+            axies_list.Add("elbow_left_roll");
+
+            axies_list.Add("wrist_left_yaw");
+            axies_list.Add("wrist_left_pitch");
+            axies_list.Add("wrist_left_roll");
+
+            axies_list.Add("hand_left_yaw");
+            axies_list.Add("hand_left_pitch");
+            axies_list.Add("hand_left_roll");
+
+            axies_list.Add("handtip_left_yaw");
+            axies_list.Add("handtip_left_pitch");
+            axies_list.Add("handtip_left_roll");
+
+            axies_list.Add("thumb_left_yaw");
+            axies_list.Add("thumb_left_pitch");
+            axies_list.Add("thumb_left_roll");
+
+            axies_list.Add("clavicle_right_yaw");
+            axies_list.Add("clavicle_right_pitch");
+            axies_list.Add("clavicle_right_roll");
+
+            axies_list.Add("shoulder_right_yaw");
+            axies_list.Add("shoulder_right_pitch");
+            axies_list.Add("shoulder_right_roll");
+
+            axies_list.Add("elbow_right_yaw");
+            axies_list.Add("elbow_right_pitch");
+            axies_list.Add("elbow_right_roll");
+
+            axies_list.Add("wrist_right_yaw");
+            axies_list.Add("wrist_right_pitch");
+            axies_list.Add("wrist_right_roll");
+
+            axies_list.Add("hand_right_yaw");
+            axies_list.Add("hand_right_pitch");
+            axies_list.Add("hand_right_roll");
+
+            axies_list.Add("handtip_right_yaw");
+            axies_list.Add("handtip_right_pitch");
+            axies_list.Add("handtip_right_roll");
+
+            axies_list.Add("thumb_right_yaw");
+            axies_list.Add("thumb_right_pitch");
+            axies_list.Add("thumb_right_roll");
+
+            axies_list.Add("hip_left_yaw");
+            axies_list.Add("hip_left_pitch");
+            axies_list.Add("hip_left_roll");
+
+            axies_list.Add("knee_left_yaw");
+            axies_list.Add("knee_left_pitch");
+            axies_list.Add("knee_left_roll");
+
+            axies_list.Add("ankle_left_yaw");
+            axies_list.Add("ankle_left_pitch");
+            axies_list.Add("ankle_left_roll");
+
+            axies_list.Add("foot_left_yaw");
+            axies_list.Add("foot_left_pitch");
+            axies_list.Add("foot_left_roll");
+
+            axies_list.Add("hip_right_yaw");
+            axies_list.Add("hip_right_pitch");
+            axies_list.Add("hip_right_roll");
+
+            axies_list.Add("knee_right_yaw");
+            axies_list.Add("knee_right_pitch");
+            axies_list.Add("knee_right_roll");
+
+            axies_list.Add("ankle_right_yaw");
+            axies_list.Add("ankle_right_pitch");
+            axies_list.Add("ankle_right_roll");
+
+            axies_list.Add("foot_right_yaw");
+            axies_list.Add("foot_right_pitch");
+            axies_list.Add("foot_right_roll");
+
+            axies_list.Add("head_yaw");
+            axies_list.Add("head_pitch");
+            axies_list.Add("head_roll");
+
+            axies_list.Add("nose_yaw");
+            axies_list.Add("nose_pitch");
+            axies_list.Add("nose_roll");
+
+            axies_list.Add("eye_left_yaw");
+            axies_list.Add("eye_left_pitch");
+            axies_list.Add("eye_left_roll");
+
+            axies_list.Add("ear_left_yaw");
+            axies_list.Add("ear_left_pitch");
+            axies_list.Add("ear_left_roll");
+
+            axies_list.Add("eye_right_yaw");
+            axies_list.Add("eye_right_pitch");
+            axies_list.Add("eye_right_roll");
+
+            axies_list.Add("ear_right_yaw");
+            axies_list.Add("ear_right_pitch");
+            axies_list.Add("ear_right_roll");
+
+            return axies_list;
+        }
+
 
         // Calculate 3D X Angle
         public double Calc3DXAngle(Vector3? position_3d)
@@ -371,385 +964,188 @@ namespace AzureKinectTool.function
             return vector_3d;
         }
 
-        // Get Vector Angle Pair
-        public ArrayList VectorPair(Dictionary<int, object> position_2d_dict, Dictionary<int, object> position_3d_dict)
+        public Dictionary<string,ArrayList> VectorPair(Dictionary<int, object> position_2d_dict, Dictionary<int, object> position_3d_dict)
         {
-            ArrayList pair_arr = new ArrayList();
+            Dictionary<string, ArrayList> vector_anlges = new Dictionary<string, ArrayList>();
+            ArrayList vector_2d_list = new ArrayList();
+            ArrayList vector_3d_list = new ArrayList();
+
             // SPINE_NAVAL(1) - PELVIS(0) - HIP_LEFT(18)
-            double pair0_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[18]);
-            double pair0_3d = Calc3DVector( (ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[18]);
-            Dictionary<string, object> pair0_value = new Dictionary<string, object>();
-            pair0_value.Add("id",0);
-            pair0_value.Add("pair", "spine_naval(1)-pelvis(0)-hip_left(18)");
-            pair0_value.Add("target", "pelvis(0)");
-            pair0_value.Add("2d", pair0_2d);
-            pair0_value.Add("3d", pair0_3d);
-            pair_arr.Add(pair0_value);
-
+            double pair1_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[18]);
+            double pair1_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[18]);
             // SPINE_NAVAL(1) - PELVIS(0) - HIP_RIGHT(22)
-            double pair1_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[22]);
-            double pair1_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[22]);
-            Dictionary<string, object> pair1_value = new Dictionary<string, object>();
-            pair1_value.Add("id", 1);
-            pair1_value.Add("pair", "spine_naval(1)-pelvis(0)-hip_right(22)");
-            pair1_value.Add("target", "pelvis(0)");
-            pair1_value.Add("2d", pair1_2d);
-            pair1_value.Add("3d", pair1_3d);
-            pair_arr.Add(pair1_value);
-
+            double pair2_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[22]);
+            double pair2_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[22]);
             // HIP_LEFT(18) - PELVIS(0) - HIP_RIGHT(22)
-            double pair2_2d = Calc2DVector((ArrayList)position_2d_dict[18], (ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[22]);
-            double pair2_3d = Calc3DVector((ArrayList)position_3d_dict[18], (ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[22]);
-            Dictionary<string, object> pair2_value = new Dictionary<string, object>();
-            pair2_value.Add("id", 2);
-            pair2_value.Add("pair", "hip_left(18)-pelvis(0)-hip_right(22)");
-            pair2_value.Add("target", "pelvis(0)");
-            pair2_value.Add("2d", pair2_2d);
-            pair2_value.Add("3d", pair2_3d);
-            pair_arr.Add(pair2_value);
-
+            double pair3_2d = Calc2DVector((ArrayList)position_2d_dict[18], (ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[22]);
+            double pair3_3d = Calc3DVector((ArrayList)position_3d_dict[18], (ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[22]);
             // PELVIS(0) - SPINE_NAVAL(1) - SPINE_CHEST(2)
-            double pair3_2d = Calc2DVector((ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2]);
-            double pair3_3d = Calc3DVector((ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2]);
-            Dictionary<string, object> pair3_value = new Dictionary<string, object>();
-            pair3_value.Add("id", 3);
-            pair3_value.Add("pair", "pelvis(0)-spine_naval(1)-spine_chest(2)");
-            pair3_value.Add("target", "spine_naval(1)");
-            pair3_value.Add("2d", pair3_2d);
-            pair3_value.Add("3d", pair3_3d);
-            pair_arr.Add(pair3_value);
-
-            // SPINE_NAVAL(1) - SPINE_CHEST(2) - CLAVICLE_LEFT(4)
-            double pair4_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[4]);
-            double pair4_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[4]);
-            Dictionary<string, object> pair4_value = new Dictionary<string, object>();
-            pair4_value.Add("id", 4);
-            pair4_value.Add("pair", "spine_naval(1)-spine_chest(2)-clavicle_left(4)");
-            pair4_value.Add("target", "spine_chest(2)");
-            pair4_value.Add("2d", pair4_2d);
-            pair4_value.Add("3d", pair4_3d);
-            pair_arr.Add(pair4_value);
-
+            double pair4_2d = Calc2DVector((ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2]);
+            double pair4_3d = Calc3DVector((ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2]);
             // SPINE_NAVAL(1) - SPINE_CHEST(2) - NECK(3)
             double pair5_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[3]);
             double pair5_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[3]);
-            Dictionary<string, object> pair5_value = new Dictionary<string, object>();
-            pair5_value.Add("id", 5);
-            pair5_value.Add("pair", "spine_naval(1)-spine_chest(2)-neck(3)");
-            pair5_value.Add("target", "spine_chest(2)");
-            pair5_value.Add("2d", pair5_2d);
-            pair5_value.Add("3d", pair5_3d);
-            pair_arr.Add(pair5_value);
-
+            // SPINE_NAVAL(1) - SPINE_CHEST(2) - CLAVICLE_LEFT(4)
+            double pair6_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[4]);
+            double pair6_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[4]);
             // SPINE_NAVAL(1) - SPINE_CHEST(2) - CLAVICLE_RIGHT(11)
-            double pair6_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11]);
-            double pair6_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11]);
-            Dictionary<string, object> pair6_value = new Dictionary<string, object>();
-            pair6_value.Add("id", 6);
-            pair6_value.Add("pair", "spine_naval(1)-spine_chest(2)-clavicle_right(11)");
-            pair6_value.Add("target", "spine_chest(2)");
-            pair6_value.Add("2d", pair6_2d);
-            pair6_value.Add("3d", pair6_3d);
-            pair_arr.Add(pair6_value);
-
+            double pair7_2d = Calc2DVector((ArrayList)position_2d_dict[1], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11]);
+            double pair7_3d = Calc3DVector((ArrayList)position_3d_dict[1], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11]);
             // CLAVICLE_LEFT(4) - SPINE_CHEST(2) - NECK(3)
-            double pair7_2d = Calc2DVector((ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[3]);
-            double pair7_3d = Calc3DVector((ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[3]);
-            Dictionary<string, object> pair7_value = new Dictionary<string, object>();
-            pair7_value.Add("id", 7);
-            pair7_value.Add("pair", "clavicle_left(4)-spine_chest(2)-neck(3)");
-            pair7_value.Add("target", "spine_chest(2)");
-            pair7_value.Add("2d", pair7_2d);
-            pair7_value.Add("3d", pair7_3d);
-            pair_arr.Add(pair7_value);
-
+            double pair8_2d = Calc2DVector((ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[3]);
+            double pair8_3d = Calc3DVector((ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[3]);
             // CLAVICLE_LEFT(4) - SPINE_CHEST(2) - CLAVICLE_RIGHT(11)
-            double pair8_2d = Calc2DVector((ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11]);
-            double pair8_3d = Calc3DVector((ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11]);
-            Dictionary<string, object> pair8_value = new Dictionary<string, object>();
-            pair8_value.Add("id", 8);
-            pair8_value.Add("pair", "clavicle_left(4)-spine_chest(2)-clavicle_right(11)");
-            pair8_value.Add("target", "spine_chest(2)");
-            pair8_value.Add("2d", pair8_2d);
-            pair8_value.Add("3d", pair8_3d);
-            pair_arr.Add(pair8_value);
-
+            double pair9_2d = Calc2DVector((ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11]);
+            double pair9_3d = Calc3DVector((ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11]);
             // NECK(3) - SPINE_CHEST(2) - CLAVICLE_RIGHT(11)
-            double pair9_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11]);
-            double pair9_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11]);
-            Dictionary<string, object> pair9_value = new Dictionary<string, object>();
-            pair9_value.Add("id", 9);
-            pair9_value.Add("pair", "neck(3)-spine_chest(2)-clavicle_right(11)");
-            pair9_value.Add("target", "spine_chest(2)");
-            pair9_value.Add("2d", pair9_2d);
-            pair9_value.Add("3d", pair9_3d);
-            pair_arr.Add(pair9_value);
-
+            double pair10_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11]);
+            double pair10_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11]);
             // SPINE_CHEST(2) - NECK(3) - HEAD(26)
-            double pair10_2d = Calc2DVector((ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26]);
-            double pair10_3d = Calc3DVector((ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26]);
-            Dictionary<string, object> pair10_value = new Dictionary<string, object>();
-            pair10_value.Add("id", 10);
-            pair10_value.Add("pair", "spine_chest(2)-neck(3)-head(26)");
-            pair10_value.Add("target", "neck(3)");
-            pair10_value.Add("2d", pair10_2d);
-            pair10_value.Add("3d", pair10_3d);
-            pair_arr.Add(pair10_value);
-
+            double pair11_2d = Calc2DVector((ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26]);
+            double pair11_3d = Calc3DVector((ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26]);
             // SPINE_CHEST(2) - CLAVICLE_LEFT(4) - SHOULDER_LEFT(5)
-            double pair11_2d = Calc2DVector((ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[5]);
-            double pair11_3d = Calc3DVector((ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[5]);
-            Dictionary<string, object> pair11_value = new Dictionary<string, object>();
-            pair11_value.Add("id", 11);
-            pair11_value.Add("pair", "spine_chest(2)-clavicle_left(4)-shoulder_left(5)");
-            pair11_value.Add("target", "clavicle_left(4)");
-            pair11_value.Add("2d", pair11_2d);
-            pair11_value.Add("3d", pair11_3d);
-            pair_arr.Add(pair11_value);
-
+            double pair12_2d = Calc2DVector((ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[5]);
+            double pair12_3d = Calc3DVector((ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[5]);
             // CLAVICLE_LEFT(4) - SHOULDER_LEFT(5) - ELVOW_LEFT(6)
-            double pair12_2d = Calc2DVector((ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[5], (ArrayList)position_2d_dict[6]);
-            double pair12_3d = Calc3DVector((ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[5], (ArrayList)position_3d_dict[6]);
-            Dictionary<string, object> pair12_value = new Dictionary<string, object>();
-            pair12_value.Add("id", 12);
-            pair12_value.Add("pair", "clavicle_left(4)-shoulder_left(5)-elvow_left(6)");
-            pair12_value.Add("target", "shoulder_left(5)");
-            pair12_value.Add("2d", pair12_2d);
-            pair12_value.Add("3d", pair12_3d);
-            pair_arr.Add(pair12_value);
-
+            double pair13_2d = Calc2DVector((ArrayList)position_2d_dict[4], (ArrayList)position_2d_dict[5], (ArrayList)position_2d_dict[6]);
+            double pair13_3d = Calc3DVector((ArrayList)position_3d_dict[4], (ArrayList)position_3d_dict[5], (ArrayList)position_3d_dict[6]);
             // SHOULDER_LEFT(5) - ELBOW_LEFT(6) - WRIST_LEFT(7)
-            double pair13_2d = Calc2DVector((ArrayList)position_2d_dict[5], (ArrayList)position_2d_dict[6], (ArrayList)position_2d_dict[7]);
-            double pair13_3d = Calc3DVector((ArrayList)position_3d_dict[5], (ArrayList)position_3d_dict[6], (ArrayList)position_3d_dict[7]);
-            Dictionary<string, object> pair13_value = new Dictionary<string, object>();
-            pair13_value.Add("id", 13);
-            pair13_value.Add("pair", "shoulder_left(5)-elvow_left(6)-wrist_left(7)");
-            pair13_value.Add("target", "elvow_left(6)");
-            pair13_value.Add("2d", pair13_2d);
-            pair13_value.Add("3d", pair13_3d);
-            pair_arr.Add(pair13_value);
-
+            double pair14_2d = Calc2DVector((ArrayList)position_2d_dict[5], (ArrayList)position_2d_dict[6], (ArrayList)position_2d_dict[7]);
+            double pair14_3d = Calc3DVector((ArrayList)position_3d_dict[5], (ArrayList)position_3d_dict[6], (ArrayList)position_3d_dict[7]);
             // ELBOW_LEFT(6) - WRIST_LEFT(7) - HAND_LEFT(8)
-            double pair14_2d = Calc2DVector((ArrayList)position_2d_dict[6], (ArrayList)position_2d_dict[7], (ArrayList)position_2d_dict[8]);
-            double pair14_3d = Calc3DVector((ArrayList)position_3d_dict[6], (ArrayList)position_3d_dict[7], (ArrayList)position_3d_dict[8]);
-            Dictionary<string, object> pair14_value = new Dictionary<string, object>();
-            pair14_value.Add("id", 14);
-            pair14_value.Add("pair", "elvow_left(6)-wrist_left(7)-hand_left(8)");
-            pair14_value.Add("target", "wrist_left(7)");
-            pair14_value.Add("2d", pair14_2d);
-            pair14_value.Add("3d", pair14_3d);
-            pair_arr.Add(pair14_value);
-
+            double pair15_2d = Calc2DVector((ArrayList)position_2d_dict[6], (ArrayList)position_2d_dict[7], (ArrayList)position_2d_dict[8]);
+            double pair15_3d = Calc3DVector((ArrayList)position_3d_dict[6], (ArrayList)position_3d_dict[7], (ArrayList)position_3d_dict[8]);
             // ELBOW_LEFT(6) - WRIST_LEFT(7) - THUMB_LEFT(10)
-            double pair15_2d = Calc2DVector((ArrayList)position_2d_dict[6], (ArrayList)position_2d_dict[7], (ArrayList)position_2d_dict[10]);
-            double pair15_3d = Calc3DVector((ArrayList)position_3d_dict[6], (ArrayList)position_3d_dict[7], (ArrayList)position_3d_dict[10]);
-            Dictionary<string, object> pair15_value = new Dictionary<string, object>();
-            pair15_value.Add("id", 15);
-            pair15_value.Add("pair", "elvow_left(6)-wrist_left(7)-thumb_left(10)");
-            pair15_value.Add("target", "wrist_left(7)");
-            pair15_value.Add("2d", pair15_2d);
-            pair15_value.Add("3d", pair15_3d);
-            pair_arr.Add(pair15_value);
-
+            double pair16_2d = Calc2DVector((ArrayList)position_2d_dict[6], (ArrayList)position_2d_dict[7], (ArrayList)position_2d_dict[10]);
+            double pair16_3d = Calc3DVector((ArrayList)position_3d_dict[6], (ArrayList)position_3d_dict[7], (ArrayList)position_3d_dict[10]);
             // WRIST_LEFT(7) - HAND_LEFT(8) - HANDTIP_LEFT(9)
-            double pair16_2d = Calc2DVector((ArrayList)position_2d_dict[7], (ArrayList)position_2d_dict[8], (ArrayList)position_2d_dict[9]);
-            double pair16_3d = Calc3DVector((ArrayList)position_3d_dict[7], (ArrayList)position_3d_dict[8], (ArrayList)position_3d_dict[9]);
-            Dictionary<string, object> pair16_value = new Dictionary<string, object>();
-            pair16_value.Add("id", 16);
-            pair16_value.Add("pair", "wrist_left(7)-hand_left(8)-handtip_left(9)");
-            pair16_value.Add("target", "hand_left(8)");
-            pair16_value.Add("2d", pair16_2d);
-            pair16_value.Add("3d", pair16_3d);
-            pair_arr.Add(pair16_value);
-
+            double pair17_2d = Calc2DVector((ArrayList)position_2d_dict[7], (ArrayList)position_2d_dict[8], (ArrayList)position_2d_dict[9]);
+            double pair17_3d = Calc3DVector((ArrayList)position_3d_dict[7], (ArrayList)position_3d_dict[8], (ArrayList)position_3d_dict[9]);
             // SPINE_CHEST(2) - CLAVICLE_RIGHT(11) - SHOULDER_RIGHT(12)
-            double pair17_2d = Calc2DVector((ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11], (ArrayList)position_2d_dict[12]);
-            double pair17_3d = Calc3DVector((ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11], (ArrayList)position_3d_dict[12]);
-            Dictionary<string, object> pair17_value = new Dictionary<string, object>();
-            pair17_value.Add("id", 17);
-            pair17_value.Add("pair", "spine_chest(2)-clavicle_right(11)-shoulder_right(12)");
-            pair17_value.Add("target", "clavicle_right(11)");
-            pair17_value.Add("2d", pair17_2d);
-            pair17_value.Add("3d", pair17_3d);
-            pair_arr.Add(pair17_value);
-
+            double pair18_2d = Calc2DVector((ArrayList)position_2d_dict[2], (ArrayList)position_2d_dict[11], (ArrayList)position_2d_dict[12]);
+            double pair18_3d = Calc3DVector((ArrayList)position_3d_dict[2], (ArrayList)position_3d_dict[11], (ArrayList)position_3d_dict[12]);
             // CLAVICLE_RIGHT(11) - SHOULDER_RIGHT(12) - ELBOW_RIGHT(13)
-            double pair18_2d = Calc2DVector((ArrayList)position_2d_dict[11], (ArrayList)position_2d_dict[12], (ArrayList)position_2d_dict[13]);
-            double pair18_3d = Calc3DVector((ArrayList)position_3d_dict[11], (ArrayList)position_3d_dict[12], (ArrayList)position_3d_dict[13]);
-            Dictionary<string, object> pair18_value = new Dictionary<string, object>();
-            pair18_value.Add("id", 18);
-            pair18_value.Add("pair", "clavicle_right(11)-shoulder_right(12)-elbow_right(13)");
-            pair18_value.Add("target", "shoulder_right(12)");
-            pair18_value.Add("2d", pair18_2d);
-            pair18_value.Add("3d", pair18_3d);
-            pair_arr.Add(pair18_value);
-
+            double pair19_2d = Calc2DVector((ArrayList)position_2d_dict[11], (ArrayList)position_2d_dict[12], (ArrayList)position_2d_dict[13]);
+            double pair19_3d = Calc3DVector((ArrayList)position_3d_dict[11], (ArrayList)position_3d_dict[12], (ArrayList)position_3d_dict[13]);
             // SHOULDER_RIGHT(12) - ELBOW_RIGHT(13) - WRIST_RIGHT(14)
-            double pair19_2d = Calc2DVector((ArrayList)position_2d_dict[12], (ArrayList)position_2d_dict[13], (ArrayList)position_2d_dict[14]);
-            double pair19_3d = Calc3DVector((ArrayList)position_3d_dict[12], (ArrayList)position_3d_dict[13], (ArrayList)position_3d_dict[14]);
-            Dictionary<string, object> pair19_value = new Dictionary<string, object>();
-            pair19_value.Add("id", 19);
-            pair19_value.Add("pair", "shoulder_right(12)-elbow_right(13)-wrist_right(14)");
-            pair19_value.Add("target", "elbow_right(13)");
-            pair19_value.Add("2d", pair19_2d);
-            pair19_value.Add("3d", pair19_3d);
-            pair_arr.Add(pair19_value);
-
+            double pair20_2d = Calc2DVector((ArrayList)position_2d_dict[12], (ArrayList)position_2d_dict[13], (ArrayList)position_2d_dict[14]);
+            double pair20_3d = Calc3DVector((ArrayList)position_3d_dict[12], (ArrayList)position_3d_dict[13], (ArrayList)position_3d_dict[14]);
             // ELBOW_RIGHT(13) - WRIST_RIGHT(14) - HAND_RIGHT(15)
-            double pair20_2d = Calc2DVector((ArrayList)position_2d_dict[13], (ArrayList)position_2d_dict[14], (ArrayList)position_2d_dict[15]);
-            double pair20_3d = Calc3DVector((ArrayList)position_3d_dict[13], (ArrayList)position_3d_dict[14], (ArrayList)position_3d_dict[15]);
-            Dictionary<string, object> pair20_value = new Dictionary<string, object>();
-            pair20_value.Add("id", 20);
-            pair20_value.Add("pair", "elbow_right(13)-wrist_right(14)-hand_right(15)");
-            pair20_value.Add("target", "wrist_right(14)");
-            pair20_value.Add("2d", pair20_2d);
-            pair20_value.Add("3d", pair20_3d);
-            pair_arr.Add(pair20_value);
-
+            double pair21_2d = Calc2DVector((ArrayList)position_2d_dict[13], (ArrayList)position_2d_dict[14], (ArrayList)position_2d_dict[15]);
+            double pair21_3d = Calc3DVector((ArrayList)position_3d_dict[13], (ArrayList)position_3d_dict[14], (ArrayList)position_3d_dict[15]);
             // ELBOW_RIGHT(13) - WRIST_RIGHT(14) - THUMB_RIGHT(17)
-            double pair21_2d = Calc2DVector((ArrayList)position_2d_dict[13], (ArrayList)position_2d_dict[14], (ArrayList)position_2d_dict[17]);
-            double pair21_3d = Calc3DVector((ArrayList)position_3d_dict[13], (ArrayList)position_3d_dict[14], (ArrayList)position_3d_dict[17]);
-            Dictionary<string, object> pair21_value = new Dictionary<string, object>();
-            pair21_value.Add("id", 21);
-            pair21_value.Add("pair", "elbow_right(13)-wrist_right(14)-thumb_right(17)");
-            pair21_value.Add("target", "wrist_right(14)");
-            pair21_value.Add("2d", pair21_2d);
-            pair21_value.Add("3d", pair21_3d);
-            pair_arr.Add(pair21_value);
-
+            double pair22_2d = Calc2DVector((ArrayList)position_2d_dict[13], (ArrayList)position_2d_dict[14], (ArrayList)position_2d_dict[17]);
+            double pair22_3d = Calc3DVector((ArrayList)position_3d_dict[13], (ArrayList)position_3d_dict[14], (ArrayList)position_3d_dict[17]);
             // WRIST_RIGHT(14) - HAND_RIGHT(15) - HANDTIP_RIGHT(16)
-            double pair22_2d = Calc2DVector((ArrayList)position_2d_dict[14], (ArrayList)position_2d_dict[15], (ArrayList)position_2d_dict[16]);
-            double pair22_3d = Calc3DVector((ArrayList)position_3d_dict[14], (ArrayList)position_3d_dict[15], (ArrayList)position_3d_dict[16]);
-            Dictionary<string, object> pair22_value = new Dictionary<string, object>();
-            pair22_value.Add("id", 22);
-            pair22_value.Add("pair", "wrist_right(14)-hand_right(15)-handtip_right(16)");
-            pair22_value.Add("target", "hand_right(15)");
-            pair22_value.Add("2d", pair22_2d);
-            pair22_value.Add("3d", pair22_3d);
-            pair_arr.Add(pair22_value);
-
+            double pair23_2d = Calc2DVector((ArrayList)position_2d_dict[14], (ArrayList)position_2d_dict[15], (ArrayList)position_2d_dict[16]);
+            double pair23_3d = Calc3DVector((ArrayList)position_3d_dict[14], (ArrayList)position_3d_dict[15], (ArrayList)position_3d_dict[16]);
             // PELVIS(0) - HIP_LEFT(18) - KNEE_LEFT(19)
-            double pair23_2d = Calc2DVector((ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[18], (ArrayList)position_2d_dict[19]);
-            double pair23_3d = Calc3DVector((ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[18], (ArrayList)position_3d_dict[19]);
-            Dictionary<string, object> pair23_value = new Dictionary<string, object>();
-            pair23_value.Add("id", 23);
-            pair23_value.Add("pair", "pelvis(0)-hip_left(18)-knee_left(19)");
-            pair23_value.Add("target", "hip_left(18)");
-            pair23_value.Add("2d", pair23_2d);
-            pair23_value.Add("3d", pair23_3d);
-            pair_arr.Add(pair23_value);
-
+            double pair24_2d = Calc2DVector((ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[18], (ArrayList)position_2d_dict[19]);
+            double pair24_3d = Calc3DVector((ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[18], (ArrayList)position_3d_dict[19]);
             // HIP_LEFT(18) - KNEE_LEFT(19) - ANKLE_LEFT(20)
-            double pair24_2d = Calc2DVector((ArrayList)position_2d_dict[18], (ArrayList)position_2d_dict[19], (ArrayList)position_2d_dict[20]);
-            double pair24_3d = Calc3DVector((ArrayList)position_3d_dict[18], (ArrayList)position_3d_dict[19], (ArrayList)position_3d_dict[20]);
-            Dictionary<string, object> pair24_value = new Dictionary<string, object>();
-            pair24_value.Add("id", 24);
-            pair24_value.Add("pair", "hip_left(18)-knee_left(19)-ankle_left(20)");
-            pair24_value.Add("target", "knee_left(19)");
-            pair24_value.Add("2d", pair24_2d);
-            pair24_value.Add("3d", pair24_3d);
-            pair_arr.Add(pair24_value);
-
+            double pair25_2d = Calc2DVector((ArrayList)position_2d_dict[18], (ArrayList)position_2d_dict[19], (ArrayList)position_2d_dict[20]);
+            double pair25_3d = Calc3DVector((ArrayList)position_3d_dict[18], (ArrayList)position_3d_dict[19], (ArrayList)position_3d_dict[20]);
             // KNEE_LEFT(19) - ANKLE_LEFT(20) - FOOT_LEFT(21)
-            double pair25_2d = Calc2DVector((ArrayList)position_2d_dict[19], (ArrayList)position_2d_dict[20], (ArrayList)position_2d_dict[21]);
-            double pair25_3d = Calc3DVector((ArrayList)position_3d_dict[19], (ArrayList)position_3d_dict[20], (ArrayList)position_3d_dict[21]);
-            Dictionary<string, object> pair25_value = new Dictionary<string, object>();
-            pair25_value.Add("id", 25);
-            pair25_value.Add("pair", "knee_left(19)-ankle_left(20)-foot_left(21)");
-            pair25_value.Add("target", "ankle_left(20)");
-            pair25_value.Add("2d", pair25_2d);
-            pair25_value.Add("3d", pair25_3d);
-            pair_arr.Add(pair25_value);
-
+            double pair26_2d = Calc2DVector((ArrayList)position_2d_dict[19], (ArrayList)position_2d_dict[20], (ArrayList)position_2d_dict[21]);
+            double pair26_3d = Calc3DVector((ArrayList)position_3d_dict[19], (ArrayList)position_3d_dict[20], (ArrayList)position_3d_dict[21]);
             // PELVIS(0) - HIP_RIGHT(22) - KNEE_RIGHT(23)
-            double pair26_2d = Calc2DVector((ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[22], (ArrayList)position_2d_dict[23]);
-            double pair26_3d = Calc3DVector((ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[22], (ArrayList)position_3d_dict[23]);
-            Dictionary<string, object> pair26_value = new Dictionary<string, object>();
-            pair26_value.Add("id", 26);
-            pair26_value.Add("pair", "pelvis(0)-hip_right(22)-knee_right(23)");
-            pair26_value.Add("target", "hip_right(22)");
-            pair26_value.Add("2d", pair26_2d);
-            pair26_value.Add("3d", pair26_3d);
-            pair_arr.Add(pair26_value);
-
+            double pair27_2d = Calc2DVector((ArrayList)position_2d_dict[0], (ArrayList)position_2d_dict[22], (ArrayList)position_2d_dict[23]);
+            double pair27_3d = Calc3DVector((ArrayList)position_3d_dict[0], (ArrayList)position_3d_dict[22], (ArrayList)position_3d_dict[23]);
             // HIP_RIGHT(22) - KNEE_RIGHT(23) - ANKLE_RIGHT(24)
-            double pair27_2d = Calc2DVector((ArrayList)position_2d_dict[22], (ArrayList)position_2d_dict[23], (ArrayList)position_2d_dict[24]);
-            double pair27_3d = Calc3DVector((ArrayList)position_3d_dict[22], (ArrayList)position_3d_dict[23], (ArrayList)position_3d_dict[24]);
-            Dictionary<string, object> pair27_value = new Dictionary<string, object>();
-            pair27_value.Add("id", 27);
-            pair27_value.Add("pair", "hip_right(22)-knee_right(23)-ankle_right(24)");
-            pair27_value.Add("target", "knee_right(23)");
-            pair27_value.Add("2d", pair27_2d);
-            pair27_value.Add("3d", pair27_3d);
-            pair_arr.Add(pair27_value);
-
+            double pair28_2d = Calc2DVector((ArrayList)position_2d_dict[22], (ArrayList)position_2d_dict[23], (ArrayList)position_2d_dict[24]);
+            double pair28_3d = Calc3DVector((ArrayList)position_3d_dict[22], (ArrayList)position_3d_dict[23], (ArrayList)position_3d_dict[24]);
             // KNEE_RIGHT(23) - ANKLE_RIGHT(24) - FOOT_RIGHT(25)
-            double pair28_2d = Calc2DVector((ArrayList)position_2d_dict[23], (ArrayList)position_2d_dict[24], (ArrayList)position_2d_dict[25]);
-            double pair28_3d = Calc3DVector((ArrayList)position_3d_dict[23], (ArrayList)position_3d_dict[24], (ArrayList)position_3d_dict[25]);
-            Dictionary<string, object> pair28_value = new Dictionary<string, object>();
-            pair28_value.Add("id", 28);
-            pair28_value.Add("pair", "knee_right(23)-ankle_right(24)-foot_right(25)");
-            pair28_value.Add("target", "ankle_right(24)");
-            pair28_value.Add("2d", pair28_2d);
-            pair28_value.Add("3d", pair28_3d);
-            pair_arr.Add(pair28_value);
-
+            double pair29_2d = Calc2DVector((ArrayList)position_2d_dict[23], (ArrayList)position_2d_dict[24], (ArrayList)position_2d_dict[25]);
+            double pair29_3d = Calc3DVector((ArrayList)position_3d_dict[23], (ArrayList)position_3d_dict[24], (ArrayList)position_3d_dict[25]);
             // NECK(3) - HEAD(26) - NOSE(27)
-            double pair29_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[27]);
-            double pair29_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[27]);
-            Dictionary<string, object> pair29_value = new Dictionary<string, object>();
-            pair29_value.Add("id", 29);
-            pair29_value.Add("pair", "neck(3)-head(26)-nose(27)");
-            pair29_value.Add("target", "head(26)");
-            pair29_value.Add("2d", pair29_2d);
-            pair29_value.Add("3d", pair29_3d);
-            pair_arr.Add(pair29_value);
-
+            double pair30_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[27]);
+            double pair30_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[27]);
             // NECK(3) - HEAD(26) - EYE_LEFT(28)
-            double pair30_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[28]);
-            double pair30_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[28]);
-            Dictionary<string, object> pair30_value = new Dictionary<string, object>();
-            pair30_value.Add("id", 30);
-            pair30_value.Add("pair", "neck(3)-head(26)-eye_left(28)");
-            pair30_value.Add("target", "head(26)");
-            pair30_value.Add("2d", pair30_2d);
-            pair30_value.Add("3d", pair30_3d);
-            pair_arr.Add(pair30_value);
-
+            double pair31_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[28]);
+            double pair31_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[28]);
             // NECK(3) - HEAD(26) - EAR_LEFT(29)
-            double pair31_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[29]);
-            double pair31_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[29]);
-            Dictionary<string, object> pair31_value = new Dictionary<string, object>();
-            pair31_value.Add("id", 31);
-            pair31_value.Add("pair", "neck(3)-head(26)-ear_left(29)");
-            pair31_value.Add("target", "head(26)");
-            pair31_value.Add("2d", pair31_2d);
-            pair31_value.Add("3d", pair31_3d);
-            pair_arr.Add(pair31_value);
-
+            double pair32_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[29]);
+            double pair32_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[29]);
             // NECK(3) - HEAD(26) - EYE_RIGHT(30)
-            double pair32_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[30]);
-            double pair32_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[30]);
-            Dictionary<string, object> pair32_value = new Dictionary<string, object>();
-            pair32_value.Add("id", 32);
-            pair32_value.Add("pair", "neck(3)-head(26)-eye_right(30)");
-            pair32_value.Add("target", "head(26)");
-            pair32_value.Add("2d", pair32_2d);
-            pair32_value.Add("3d", pair32_3d);
-            pair_arr.Add(pair32_value);
-
+            double pair33_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[30]);
+            double pair33_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[30]);
             // NECK(3) - HEAD(26) - EAR_RIGHT(31)
-            double pair33_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[31]);
-            double pair33_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[31]);
-            Dictionary<string, object> pair33_value = new Dictionary<string, object>();
-            pair33_value.Add("id", 33);
-            pair33_value.Add("pair", "neck(3)-head(26)-ear_right(31)");
-            pair33_value.Add("target", "head(26)");
-            pair33_value.Add("2d", pair33_2d);
-            pair33_value.Add("3d", pair33_3d);
-            pair_arr.Add(pair33_value);
+            double pair34_2d = Calc2DVector((ArrayList)position_2d_dict[3], (ArrayList)position_2d_dict[26], (ArrayList)position_2d_dict[31]);
+            double pair34_3d = Calc3DVector((ArrayList)position_3d_dict[3], (ArrayList)position_3d_dict[26], (ArrayList)position_3d_dict[31]);
 
-            return pair_arr;
+            vector_2d_list.Add(pair1_2d);
+            vector_3d_list.Add(pair1_3d);
+            vector_2d_list.Add(pair2_2d);
+            vector_3d_list.Add(pair2_3d);
+            vector_2d_list.Add(pair3_2d);
+            vector_3d_list.Add(pair3_3d);
+            vector_2d_list.Add(pair4_2d);
+            vector_3d_list.Add(pair4_3d);
+            vector_2d_list.Add(pair5_2d);
+            vector_3d_list.Add(pair5_3d);
+            vector_2d_list.Add(pair6_2d);
+            vector_3d_list.Add(pair6_3d);
+            vector_2d_list.Add(pair7_2d);
+            vector_3d_list.Add(pair7_3d);
+            vector_2d_list.Add(pair8_2d);
+            vector_3d_list.Add(pair8_3d);
+            vector_2d_list.Add(pair9_2d);
+            vector_3d_list.Add(pair9_3d);
+            vector_2d_list.Add(pair10_2d);
+            vector_3d_list.Add(pair10_3d);
+            vector_2d_list.Add(pair11_2d);
+            vector_3d_list.Add(pair11_3d);
+            vector_2d_list.Add(pair12_2d);
+            vector_3d_list.Add(pair12_3d);
+            vector_2d_list.Add(pair13_2d);
+            vector_3d_list.Add(pair13_3d);
+            vector_2d_list.Add(pair14_2d);
+            vector_3d_list.Add(pair14_3d);
+            vector_2d_list.Add(pair15_2d);
+            vector_3d_list.Add(pair15_3d);
+            vector_2d_list.Add(pair16_2d);
+            vector_3d_list.Add(pair16_3d);
+            vector_2d_list.Add(pair17_2d);
+            vector_3d_list.Add(pair17_3d);
+            vector_2d_list.Add(pair18_2d);
+            vector_3d_list.Add(pair18_3d);
+            vector_2d_list.Add(pair19_2d);
+            vector_3d_list.Add(pair19_3d);
+            vector_2d_list.Add(pair20_2d);
+            vector_3d_list.Add(pair20_3d);
+            vector_2d_list.Add(pair21_2d);
+            vector_3d_list.Add(pair21_3d);
+            vector_2d_list.Add(pair22_2d);
+            vector_3d_list.Add(pair22_3d);
+            vector_2d_list.Add(pair23_2d);
+            vector_3d_list.Add(pair23_3d);
+            vector_2d_list.Add(pair24_2d);
+            vector_3d_list.Add(pair24_3d);
+            vector_2d_list.Add(pair25_2d);
+            vector_3d_list.Add(pair25_3d);
+            vector_2d_list.Add(pair26_2d);
+            vector_3d_list.Add(pair26_3d);
+            vector_2d_list.Add(pair27_2d);
+            vector_3d_list.Add(pair27_3d);
+            vector_2d_list.Add(pair28_2d);
+            vector_3d_list.Add(pair28_3d);
+            vector_2d_list.Add(pair29_2d);
+            vector_3d_list.Add(pair29_3d);
+            vector_2d_list.Add(pair30_2d);
+            vector_3d_list.Add(pair30_3d);
+            vector_2d_list.Add(pair31_2d);
+            vector_3d_list.Add(pair31_3d);
+            vector_2d_list.Add(pair32_2d);
+            vector_3d_list.Add(pair32_3d);
+            vector_2d_list.Add(pair33_2d);
+            vector_3d_list.Add(pair33_3d);
+            vector_2d_list.Add(pair34_2d);
+            vector_3d_list.Add(pair34_3d);
+
+            vector_anlges.Add("2d", vector_2d_list);
+            vector_anlges.Add("3d", vector_3d_list);
+
+            return vector_anlges;
         }
     }
 }
