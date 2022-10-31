@@ -158,9 +158,23 @@ namespace AzureKinectTool
 
                 if (id_chk.Equals(1))
                 {
-                    string game_level = GLNUD.Value.ToString();
-                    string game_stage = GSNUD.Value.ToString();
-                    game_info = game_level + game_stage;
+                    //string game_level = GLNUD.Value.ToString();
+                    //string game_stage = GSNUD.Value.ToString();
+                    //game_info = game_level + game_stage;
+
+                    int game_select_idx = GameBox.SelectedIndex;
+                    switch (game_select_idx)
+                    {
+                        case 0:
+                            game_info = "62";
+                            break;
+                        case 1:
+                            game_info = "63";
+                            break;
+                        case 2:
+                            game_info = "12";
+                            break;
+                    }
 
                     storage = SDText.Text;
                     date = DateTime.Now.ToString("yyMMdd", CultureInfo.CurrentUICulture.DateTimeFormat);
@@ -183,6 +197,13 @@ namespace AzureKinectTool
                         ic_flg = 1;
 
                         _ = MessageBox.Show("Successfully modify Subject Information.");
+                        _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                        {
+                            ICButton.Background = new SolidColorBrush(Colors.SkyBlue);
+                            LocationBox.IsEnabled = false;
+                            IDBox.IsEnabled = false;
+                            GameBox.IsEnabled = false;
+                        }));
                     }
                     else
                     {
@@ -383,6 +404,11 @@ namespace AzureKinectTool
                     {
                         PWButton.Background = new SolidColorBrush(Colors.LightCoral);
                         RCButton.IsEnabled = false;
+
+                        ICButton.Background = new SolidColorBrush(Colors.Beige);
+                        LocationBox.IsEnabled = true;
+                        IDBox.IsEnabled = true;
+                        GameBox.IsEnabled = true;
                     }));
 
                     kinect_list.Clear();
@@ -432,6 +458,19 @@ namespace AzureKinectTool
 
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    if (SCSwitch.IsOn)
+                                    {
+                                        if (init_device_cnt.Equals(1))
+                                        {
+                                            RecordStat_1.Background = new SolidColorBrush(Colors.Crimson);
+                                        }
+                                        else if (init_device_cnt.Equals(2))
+                                        {
+                                            RecordStat_1.Background = new SolidColorBrush(Colors.Crimson);
+                                            RecordStat_2.Background = new SolidColorBrush(Colors.Crimson);
+                                        }
+                                    }
+
                                     RCButton.Background = new SolidColorBrush(Colors.SkyBlue);
                                     PWButton.IsEnabled = false;
                                 }));
@@ -446,11 +485,26 @@ namespace AzureKinectTool
 
                     _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                     {
+                        if (init_device_cnt.Equals(1))
+                        {
+                            RecordStat_1.Background = new SolidColorBrush(Colors.Gray);
+                        }
+                        else if (init_device_cnt.Equals(2))
+                        {
+                            RecordStat_1.Background = new SolidColorBrush(Colors.Gray);
+                            RecordStat_2.Background = new SolidColorBrush(Colors.Gray);
+                        }
+                        
                         RCButton.Background = new SolidColorBrush(Colors.Beige);
                         PWButton.IsEnabled = true;
 
                         KImage_1.Visibility = Visibility.Hidden;
                         KImage_2.Visibility = Visibility.Hidden;
+
+                        ICButton.Background = new SolidColorBrush(Colors.Beige);
+                        LocationBox.IsEnabled = true;
+                        IDBox.IsEnabled = true;
+                        GameBox.IsEnabled = true;
                     }));
 
                     ic_flg = 0;
