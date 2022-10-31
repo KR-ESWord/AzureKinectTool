@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -365,8 +365,8 @@ namespace AzureKinectTool.function
                 coco_dict.Add("info",info_dict);
                 coco_dict.Add("lisences",empty_list);
                 coco_dict.Add("categories", category_list[0]);
-                coco_dict.Add("survey_info", empty_list);
-                coco_dict.Add("inbody_info", empty_list);
+                coco_dict.Add("survey_info", empty_dict);
+                coco_dict.Add("inbody_info", empty_dict);
                 coco_dict.Add("camera_info", calib_info);
                 coco_dict.Add("video_info",video_list);
                 coco_dict.Add("images",images_list);
