@@ -152,10 +152,6 @@
                             </TabItem>
                             <TabItem Header="Save">
                                 <StackPanel>
-                                    <mah:ToggleSwitch Name="SCSwitch" IsOn="True" Toggled="SCSwitch_Toggled"
-                                                      OnContent="Activate"
-                                                      OffContent="DeActivate"/>
-                                    
                                     <GroupBox Header="Data Save Check" Margin="10" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
                                         <GroupBox.Resources>
                                             <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
@@ -242,21 +238,32 @@
                                         <GroupBox.Resources>
                                             <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
                                         </GroupBox.Resources>
-                                        <StackPanel Orientation="Vertical">
-                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
-                                                <TextBlock Text="Sync Mode : "
+                                        <StackPanel Orientation="Horizontal">
+                                            <StackPanel Orientation="Vertical">
+                                                <StackPanel Width="504" Height="30" Orientation="Horizontal">
+                                                    <TextBlock Text="Sync Mode : "
                                                            VerticalAlignment="Center"/>
-                                                <TextBlock Name="SyncText_1" Text="Offline"
+                                                    <TextBlock Name="SyncText_1" Text="Offline"
                                                            VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Width="504" Height="30" Orientation="Horizontal">
+                                                    <TextBlock Text="Location : "
+                                                           VerticalAlignment="Center"/>
+                                                    <ComboBox Name="KLocationBox_1">
+                                                        <ComboBoxItem Content="Front" IsSelected="True"/>
+                                                        <ComboBoxItem Content="Left"/>
+                                                        <ComboBoxItem Content="Right"/>
+                                                    </ComboBox>
+                                                </StackPanel>
                                             </StackPanel>
-                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
-                                                <TextBlock Text="Location : "
-                                                           VerticalAlignment="Center"/>
-                                                <ComboBox Name="KLocationBox_1">
-                                                    <ComboBoxItem Content="Front" IsSelected="True"/>
-                                                    <ComboBoxItem Content="Left"/>
-                                                    <ComboBoxItem Content="Right"/>
-                                                </ComboBox>
+                                            <StackPanel Width="70">
+                                                <Button Name="RecordStat_1"
+                                                        Margin="0,10,0,0"
+                                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                                        Height="33" Width="33"
+                                                        Background="Gray">
+                                                    <iconPacks:BootstrapIcons Kind="RecordCircle"/>
+                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
                                     </GroupBox>
@@ -278,21 +285,32 @@
                                         <GroupBox.Resources>
                                             <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
                                         </GroupBox.Resources>
-                                        <StackPanel Orientation="Vertical">
-                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
-                                                <TextBlock Text="Sync Mode : "
+                                        <StackPanel Orientation="Horizontal">
+                                            <StackPanel Orientation="Vertical">
+                                                <StackPanel Width="504" Height="30" Orientation="Horizontal">
+                                                    <TextBlock Text="Sync Mode : "
                                                            VerticalAlignment="Center"/>
-                                                <TextBlock Name="SyncText_2" Text="Offline"
+                                                    <TextBlock Name="SyncText_2" Text="Offline"
                                                            VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Width="504" Height="30" Orientation="Horizontal">
+                                                    <TextBlock Text="Location : "
+                                                           VerticalAlignment="Center"/>
+                                                    <ComboBox Name="KLocationBox_2">
+                                                        <ComboBoxItem Content="Front" IsSelected="True"/>
+                                                        <ComboBoxItem Content="Left"/>
+                                                        <ComboBoxItem Content="Right"/>
+                                                    </ComboBox>
+                                                </StackPanel>
                                             </StackPanel>
-                                            <StackPanel Width="554" Height="30" Orientation="Horizontal">
-                                                <TextBlock Text="Location : "
-                                                           VerticalAlignment="Center"/>
-                                                <ComboBox Name="KLocationBox_2">
-                                                    <ComboBoxItem Content="Front" IsSelected="True"/>
-                                                    <ComboBoxItem Content="Left"/>
-                                                    <ComboBoxItem Content="Right"/>
-                                                </ComboBox>
+                                            <StackPanel Width="70">
+                                                <Button Name="RecordStat_2"
+                                                        Margin="0,10,0,0"
+                                                        Style="{DynamicResource MahApps.Styles.Button.Circle}"
+                                                        Height="33" Width="33"
+                                                        Background="Gray">
+                                                    <iconPacks:BootstrapIcons Kind="RecordCircle"/>
+                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
                                     </GroupBox>
@@ -304,7 +322,7 @@
             </Border>
             <Grid Height="104">
                 <StackPanel Orientation="Horizontal">
-                    <!-- System Log -->
+                    <!-- Subject Information -->
                     <Grid Width="950">
                         <GroupBox Header="subject information">
                             <StackPanel Orientation="Horizontal">
@@ -330,7 +348,19 @@
                                              controls:TextBoxHelper.ClearTextButton="True"
                                              PreviewTextInput="IntegerInput"/>
                                 </GroupBox>
-                                
+
+                                <GroupBox Header="Game Module" Margin="50,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                    <GroupBox.Resources>
+                                        <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
+                                    </GroupBox.Resources>
+                                    <ComboBox Name="GameBox" Width="150" Height="45" FontSize="22">
+                                        <ComboBoxItem Content=" 6 - 2" IsSelected="True" FontSize="22"/>
+                                        <ComboBoxItem Content=" 6 - 3" FontSize="22"/>
+                                        <ComboBoxItem Content=" 1 - 2" FontSize="22"/>
+                                    </ComboBox>
+                                </GroupBox>
+
+                                <!-- 
                                 <GroupBox Header="Level" Margin="50,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
                                     <GroupBox.Resources>
                                         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
@@ -344,16 +374,19 @@
                                     </GroupBox.Resources>
                                     <mah:NumericUpDown Name="GSNUD" Value="1" Minimum="1" Maximum="3" Interval="1" Width="150" Height="45"  FontSize="22"/>
                                 </GroupBox>
-
+                                -->
                                 <Button Name="ICButton"
                                         Margin="30,0,0,0"
                                         Style="{DynamicResource MahApps.Styles.Button.Circle}"
                                         Height="33" Width="33"
-                                        Background="SkyBlue"
+                                        Background="Beige"
                                         Click="ICButton_Click"
                                         ToolTip="Confirm Subject Information">
                                     <iconPacks:BootstrapIcons Kind="CheckLg"/>
                                 </Button>
+
+                                <mah:ToggleSwitch Name="SCSwitch" Margin="50,0,0,0" IsOn="True" Toggled="SCSwitch_Toggled" OnContent="Activate" OffContent="DeActivate"/>
+
                             </StackPanel>
                         </GroupBox>
                     </Grid>
