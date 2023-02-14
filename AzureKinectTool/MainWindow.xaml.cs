@@ -1,35 +1,30 @@
+// 기본 라이브러리 호출
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Globalization;
 using System.IO;
-using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-// Azure Kinect SDK
+// Azure Kinect SDK 라이브러리 호출
 using Microsoft.Azure.Kinect.Sensor;
 using Microsoft.Azure.Kinect.BodyTracking;
-// MahApps
+// MahApps 라이브러리 호출 - UI 관련 라이브러리
 using MahApps.Metro.Controls;
 
 namespace AzureKinectTool
 {
     public partial class MainWindow : MetroWindow
     {
+        // Class 호출 및 선언
         function.AKCalibration AKCalibration = new function.AKCalibration();
         function.AKConfig AKConfig = new function.AKConfig();
         function.AKDataSave AKDataSave = new function.AKDataSave();
@@ -38,28 +33,29 @@ namespace AzureKinectTool
         function.AKTracker AKTracker = new function.AKTracker();
         function.CocoCreater CocoCreater = new function.CocoCreater();
 
-        public int init_device_cnt = 0;
-        public ArrayList synctxt_list = new ArrayList();
-        public ArrayList loctxt_list = new ArrayList();
-        public ArrayList img_list = new ArrayList();
+        public int init_device_cnt = 0; // 연결된 Azure Kinect 수 Count 관련 전역 변수
+        public ArrayList synctxt_list = new ArrayList(); // Azure Kinect 동기화 상태 Text UI 관련 변수 담을 전역 리스트
+        public ArrayList loctxt_list = new ArrayList(); // Azure Kinect 위치 Text UI 관련 변수 담을 전역 리스트
+        public ArrayList img_list = new ArrayList(); // Azure Kinect의 Capture Image를 표시하기 위한 UI 관련 변수 담을 전역 리스트
 
         public MainWindow()
         {
             InitializeComponent();
 
-            synctxt_list.Add(SyncText_1);
-            synctxt_list.Add(SyncText_2);
+            synctxt_list.Add(SyncText_1); // 왼쪽 동기화 상태 TextBox를 리스트에 추가
+            synctxt_list.Add(SyncText_2); // 오른쪽 동기화 상태 TextBox를 리스트에 추가
 
-            loctxt_list.Add(KLocationBox_1);
-            loctxt_list.Add(KLocationBox_2);
+            loctxt_list.Add(KLocationBox_1); // 왼쪽 Azure Kinect 위치 TextBox를 리스트에 추가
+            loctxt_list.Add(KLocationBox_2); // 오른쪽 Azure Kinect 위치 TextBox를 리스트에 추가
 
-            img_list.Add(KImage_1);
-            img_list.Add(KImage_2);
+            img_list.Add(KImage_1); // 왼쪽 Azure Kinect의 Capture를 표시할 Image UI를 리스트에 추가
+            img_list.Add(KImage_2); // 오른쪽 Azure Kinect의 Capture를 표시할 Image UI를 리스트에 추가
 
-            init_device_cnt = Device.GetInstalledCount();
+            init_device_cnt = Device.GetInstalledCount(); // 프로그램 시작 시 연결되어 있는 Azure Kinect의 수 가져오기
         }
 
         // Text Integer Input Event //
+        // TextBox에 Text 입력 시 숫자만 입력할 수 있게하는 함수
         private void IntegerInput(object sender, TextCompositionEventArgs e)
         {
             Regex regex = new Regex("[^0-9]+");
@@ -67,6 +63,7 @@ namespace AzureKinectTool
         }
 
         // Check Storage Disc Free Space //
+        // PC 저장소의 잔여용량을 계산하는 함수로 프로그램 시작 또는 저장소 변경 시 잔여 용량이 100GiB 미만이면 안내창 호출
         public void CheckStorageSpace()
         {
             DriveInfo[] driveInfos = DriveInfo.GetDrives();
@@ -94,6 +91,7 @@ namespace AzureKinectTool
         }
 
         // Azure Kinect Setting //
+        // Azure Kinect 설정 메뉴 활성화 및 초기 연결된 Azure Kinect의 수 표시하는 함수
         private void AK_Setting(object sender, RoutedEventArgs e)
         {
             AK_Menu.IsOpen = true;
@@ -102,6 +100,7 @@ namespace AzureKinectTool
         }
 
         // Select Storage Disk //
+        // PC 저장소 선택하는 버튼 동작 관련 함수로 저장소를 바꿀때 사용되며 저장소를 변경 후 용량을 확인하는 작업 수행
         private void SSButton_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
@@ -113,56 +112,68 @@ namespace AzureKinectTool
         }
 
         // Storage Free Space Check //
+        // 단순히 현재 선택되어져 있는 저장소의 잔여 용량을 새로고침 해주는 동작을 하는 버튼관련 함수
         private void SCButton_Click(object sender, RoutedEventArgs e)
         {
             CheckStorageSpace();
         }
 
         // Confirm Subject Information //
-        public int ic_flg = 0;
-        public string storage = "";
-        public string trg_path = "";
-        public string subject = "";
-        public string date = "";
-        public string game_info = "";
+        // 대상자 및 PA Game의 현재 정보를 지정하는 함수로 여기에서 대상자의 ID, PA Game의 단계, 촬영장소를 입력하여 및 지정하여 데이터 저장하기 위한 폴더를 생성하는 함수
+        public int ic_flg = 0; // 대상자 및 PA Game관련 설정이 이루어졌는지 확인하는 정수형 변수(0 : 설정하지 않음 / 1 : 설정함)
+        public string storage = ""; // 현재 저장소 표시 문자열 변수
+        public string trg_path = ""; // 설정된 PA Game까지의 경로를 담을 문자열 변수
+        public string subject = ""; // 대상자 ID값을 담을 문자열 변수
+        public string date = ""; // 현재 일자를 담을 문자열 변수
+        public string game_info = ""; // PA Game의 선택된 단계를 담을 문자열 변수
         private void ICButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SCSwitch.IsOn)
+            // 대상자 정보를 입력할 수 있게 UI가 활성화 되어있는지 확인하여 UI가 활성화되어 있으면 정보를 입력 및 저장, UI가 비활성화 되어있으면 정보를 입력할 수 있게 UI를 활성화하는 작업을 수행
+            if (IDBox.IsEnabled.Equals(true))
             {
-                int id_chk = 0;
-                // Get UI Values
-                int plc_idx = LocationBox.SelectedIndex;
-                string plc = "";
-                switch (plc_idx)
+                if (SCSwitch.IsOn) // 데이터 저장을 활성화 했을 경우에만 대상자 및 PA Game 관련 정보 기입 수행
                 {
-                    case 0:
-                        plc = "d";
-                        break;
-                    case 1:
-                        plc = "h";
-                        break;
-                    case 2:
-                        plc = "s";
-                        break;
-                }
-                string subject_id = IDBox.Text.PadLeft(4,'0');
-                if (subject_id.Equals("----"))
-                {
-                    _ = MessageBox.Show("ID has not been entered.\nPlease Check ID!");
-                }
-                else
-                {
-                    id_chk = 1;
-                }
-                subject = plc + subject_id;
+                    // 대상자 ID 번호 설정 작업 수행
+                    int id_chk = 0; // ID 번호 가 설정되었는지 확인하는 정수형 변수
+                    string subject_id = IDBox.Text.PadLeft(4, '0'); // ID 번호를 입력하는 TextBox로부터 입력되어져 있는 문자열 정보 추출 후 4자리의 문자열이 아닐경우에는 왼쪽에서부터 4자리가 되도록 0으로 채운 문자열 변수로 만들어 줌
+                    if (subject_id.Equals("----")) // ID 번호의 TextBox의 초기값이 "----"이므로 대상자 ID를 입력하지 않았을 경우에는 ID를 입력하도록 안내창 출력
+                    {
+                        _ = MessageBox.Show("ID has not been entered.\nPlease Check ID!");
+                        id_chk = 0;
+                    }
+                    else // 대상자 ID 번호를 획득했다면 ID 번호 획득 확인 정수형 변수의 값을 1로 변경하여 상태 표시
+                    {
+                        id_chk = 1;
+                    }
 
-                if (id_chk.Equals(1))
-                {
+                    // 데이터 수집 장소 추출 작업 수행
+                    int plc_idx = LocationBox.SelectedIndex; // 수집 장소 ComboBox에서 선택되어져 있는 값의 Index를 획득
+                    string plc = ""; // 수집 장소를 나타낼 문자열을 담을 변수
+                    switch (plc_idx)
+                    {
+                        case 0:
+                            plc = "d"; // 한양대 DHC 센터
+                            break;
+                        case 1:
+                            plc = "h"; // 한양대 병원
+                            break;
+                        case 2:
+                            plc = "s"; // 삼성 서울 병원
+                            break;
+                    }
+                    // 데이터 수집 장소와 입력 받은 대상자 ID 번호를 통해서 대상자 ID를 설정
+                    subject = plc + subject_id;
+
+
+                    // 아래의 3줄은 지정한 3개의 PA Game만 수행이 아닌 전체 PA Game의 데이터를 수집할 경우 사용하는 코드로 현재 실험은 3개의 PA Game을 지정하여 사용하기에
+                    // 추후 PA Game 선택 관련 UI 변경하여 같이 사용하면 됨
                     //string game_level = GLNUD.Value.ToString();
                     //string game_stage = GSNUD.Value.ToString();
                     //game_info = game_level + game_stage;
 
-                    int game_select_idx = GameBox.SelectedIndex;
+                    // PA Game의 Module을 선택하는 작업 수행
+                    int game_select_idx = GameBox.SelectedIndex; // 현재 선택되어져 있는 PA Game Module의 ComboBox 값의 Index를 획득
+                                                                 // 획득한 Index의 값에 따른 PA Game 모듈의 문자열을 지정
                     switch (game_select_idx)
                     {
                         case 0:
@@ -176,50 +187,73 @@ namespace AzureKinectTool
                             break;
                     }
 
-                    storage = SDText.Text;
-                    date = DateTime.Now.ToString("yyMMdd", CultureInfo.CurrentUICulture.DateTimeFormat);
-
-                    // Set Basic Path
-                    var basic_path = System.IO.Path.Combine(storage, "AzureKinectData", subject, date);
-                    DirectoryInfo basic_dir = new DirectoryInfo(basic_path);
-                    if (!basic_dir.Exists)
+                    if (id_chk.Equals(1))
                     {
-                        basic_dir.Create();
-                    }
+                        // 선택되어져 있는 PC 저장소의 문자열 획득
+                        storage = SDText.Text;
+                        // 현재 데이터 수집일자의 문자열 획득
+                        date = DateTime.Now.ToString("yyMMdd", CultureInfo.CurrentUICulture.DateTimeFormat);
 
-                    // Check Game Information Directory
-                    var game_path = System.IO.Path.Combine(basic_path, game_info);
-                    DirectoryInfo game_dir = new DirectoryInfo(game_path);
-                    if (!game_dir.Exists)
-                    {
-                        game_dir.Create();
-                        trg_path = game_path;
-                        ic_flg = 1;
-
-                        _ = MessageBox.Show("Successfully modify Subject Information.");
-                        _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                        // Set Basic Path
+                        // PC 저장소/AzureKinectData/대상자ID/일자 의 경로 문자열 생성 및 폴더 생성
+                        var basic_path = System.IO.Path.Combine(storage, "AzureKinectData", subject, date);
+                        DirectoryInfo basic_dir = new DirectoryInfo(basic_path);
+                        if (!basic_dir.Exists)
                         {
-                            ICButton.Background = new SolidColorBrush(Colors.SkyBlue);
-                            LocationBox.IsEnabled = false;
-                            IDBox.IsEnabled = false;
-                            GameBox.IsEnabled = false;
-                        }));
+                            basic_dir.Create();
+                        }
+
+                        var game_path = System.IO.Path.Combine(basic_path, game_info); // 기본 경로 + PA Game Module의 폴더 경로 문자열 생성 및 폴더 생성
+                        DirectoryInfo game_dir = new DirectoryInfo(game_path);
+                        if (!game_dir.Exists)
+                        {
+                            game_dir.Create();
+                            trg_path = game_path;
+                            ic_flg = 1;
+
+                            // 정상적으로 대상자의 정보 및 폴더가 정상적으로 설정이 되었다면 이를 UI를 통해 확인을 시켜주고 정보를 더이상 수정할 수 없게 조치하는 비활성화 작업 수행
+                            _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                            {
+                                ICButton.Background = new SolidColorBrush(Colors.SkyBlue);
+                                LocationBox.IsEnabled = false;
+                                IDBox.IsEnabled = false;
+                                GameBox.IsEnabled = false;
+                            }));
+                        }
+                        else
+                        {
+                            _ = MessageBox.Show("해당 대상자의 PA Game Module의 폴더가 이미 생성되어 있습니다.\n\n생성되어져 있는 폴더를 확인 후 폴더를 삭제 또는 정보를 변경 하여\n다시 시도해 주십시오.");
+                            ic_flg = 0;
+                        }
                     }
                     else
                     {
-                        _ = MessageBox.Show("The game was duplicated on this subject.\nPlease Check Subject and Game Information!");
+                        _ = MessageBox.Show("대상자 ID가 정상적으로 설정되지 않았습니다.\n확인 후 다시 시도해 주십시오.");
+                        ic_flg = 0;
                     }
                 }
+                else
+                {
+                    ic_flg = 1;
+                }
+                _ = MessageBox.Show("Successfully modify Subject Information.");
             }
             else
             {
-                ic_flg = 1;
-                _ = MessageBox.Show("Successfully modify Subject Information.");
+                // 대상자 정보를 수정하기 위하여 UI를 활성화 작업 수행
+                _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                {
+                    ICButton.Background = new SolidColorBrush(Colors.Beige);
+                    LocationBox.IsEnabled = true;
+                    IDBox.IsEnabled = true;
+                    GameBox.IsEnabled = true;
+                }));
+                ic_flg = 0;
             }
-            
         }
 
         // Connected Kinect Check //
+        // 연결되어진 Azure Kinect의 수를 파악하여 TextBlock에 표시해주는 함수
         private void KCButton_Click(object sender, RoutedEventArgs e)
         {
             int device_cnt = Device.GetInstalledCount();
@@ -227,11 +261,13 @@ namespace AzureKinectTool
         }
 
         // Save Activate Toggle Switch //
+        // Azure Kinect로부터 촬영 시 데이터를 수집할 것인지 수집하지 않을 것인지 미리 선택하는 함수
+        // Azure Kinect 설치 후 위치 조정 혹은 정상적으로 촬영이 되어지는지 확인할 때 Deactivate상태로 Toggle 버튼을 지정함
         private void SCSwitch_Toggled(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (SCSwitch.IsOn)
+                if (SCSwitch.IsOn) // 데이터 수집 활성화
                 {
                     CISwitch.IsEnabled = true;
                     DISwitch.IsEnabled = true;
@@ -239,7 +275,7 @@ namespace AzureKinectTool
                     JDSwitch.IsEnabled = true;
                     CVSwitch.IsEnabled = true;
                 }
-                else
+                else // 데이터 수집 비활성화
                 {
                     CISwitch.IsEnabled = false;
                     DISwitch.IsEnabled = false;
@@ -255,171 +291,210 @@ namespace AzureKinectTool
         }
 
         // Azure Kinect Power Control //
-        public int sync_mode = 0;
-        public int kp_flg = 0;
-        public ArrayList device_list = new ArrayList();
-        public ArrayList mtk_list = new ArrayList();
-        public ArrayList sbk_list = new ArrayList();
-        public ArrayList sak_list = new ArrayList();
-        public ArrayList kinect_list = new ArrayList();
+        // Azure Kinect와 PC 프로그램과 연결하는 함수
+        public int sync_mode = 0; // Azure Kinect를 Syncronize하여 사용할지 체크하는 정수형 변수
+        public int kp_flg = 0; // Azure Kinect Power가 수행되었는지 확인하는 정수형 변수
+        public ArrayList kinect_list = new ArrayList(); // Azure Kinect의 device 객체를 담을 전역 리스트
         private void PWButton_Click(object sender, RoutedEventArgs e)
         {
-            int device_cnt = Device.GetInstalledCount();
-
-            switch (kp_flg)
+            try
             {
-                // Azure Kinect Power ON
-                case 0:
-                    if (SCSwitch.IsOn)
-                    {
-                        ic_flg = ic_flg;
-                    }
-                    else
-                    {
-                        ic_flg = 1;
-                    }
-                    switch (ic_flg)
-                    {
-                        case 0:
-                            _ = MessageBox.Show("Subject information not set.\nPlease Setting Subject Information!");
-                            break;
+                int device_cnt = Device.GetInstalledCount();
+                ArrayList device_list = new ArrayList(); // Azure Kinect의 device 객체를 담을 임시 리스트
+                ArrayList mtk_list = new ArrayList(); // Syncronize Mode가 Master인 Kinect를 담을 리스트
+                ArrayList sbk_list = new ArrayList(); // Syncronize Mode가 Subordinate인 Kinect를 담을 리스트
+                ArrayList sak_list = new ArrayList(); // Syncronize Mode가 Standalone인 Kinect를 담을 리스트
+                // Why? Azure Kinect의 device를 객체를 가져올 때에는 Device의 serial number의 순서대로 가져오기 때문에 Master와 Subordinate의 위치를 구별하기 위한 작업이 필요함
+                switch (kp_flg)
+                {
+                    case 0: // Azure Kinect Power ON
+                        // 대상자 정보가 정상적으로 설정이 되어있는지 확인하는 작업 수행
+                        int subject_info_chk = 0;
+                        if (SCSwitch.IsOn)
+                        {
+                            subject_info_chk = ic_flg;
+                        }
+                        else
+                        {
+                            subject_info_chk = 1;
+                        }
 
-                        case 1:
-                            kp_flg = 1;
+                        switch (subject_info_chk)
+                        {
+                            case 0: // 대상자 정보가 정상적으로 설정이 되지 않았을 경우 안내창 호출
+                                _ = MessageBox.Show("대상자 정보가 정상적으로 설정되어있지 않습니다.\n대상자 정보를 확인하여 다시 시도해 주십시오.");
+                                break;
 
-                            // Device List 초기화 후 연결된 Kinect의 수 만큼 Power ON 수행
-                            device_list.Clear();
-                            device_list = AKPower.AKPWON(device_cnt);
-                            mtk_list.Clear();
-                            sbk_list.Clear();
-                            sak_list.Clear();
-
-                            // Azure Kinect 설정 선택 값 호출
-                            int dm_idx = DMBox.SelectedIndex;
-                            int cf_idx = CFBox.SelectedIndex;
-                            int cr_idx = CRBox.SelectedIndex;
-                            int fr_idx = FRBox.SelectedIndex;
-
-                            int tm_idx = TMBox.SelectedIndex;
-                            int om_idx = OMBox.SelectedIndex;
-                            int so_idx = SOBox.SelectedIndex;
-                            int gi_idx = (int)GINUD.Value;
-
-                            // Azure Kinect 정보 추출하여 전역 딕셔너리에 정보 저장
-                            for (int idx = 0; idx < device_cnt; idx++)
-                            {
-                                Device kinect = (Device)device_list[idx];
-                                string sync_mode = AKPower.AKSync(kinect);
-
-                                DeviceConfiguration sensor_config = AKConfig.SensorConfig(dm_idx, cf_idx, cr_idx, fr_idx);
-                                if (sync_mode.Equals("Master"))
+                            case 1:
+                                try
                                 {
-                                    sensor_config.WiredSyncMode = WiredSyncMode.Master;
+                                    // Device List 초기화 후 연결된 Kinect의 수 만큼 Power ON 수행
+                                    device_list.Clear();
+                                    device_list = AKPower.AKPWON(device_cnt);
+
+                                    // Azure Kinect의 Syncronize 상태에 따른 분류를 위한 임시 리스트 초기화
+                                    mtk_list.Clear();
+                                    sbk_list.Clear();
+                                    sak_list.Clear();
+
+                                    // Azure Kinect 설정 선택 값 호출
+                                    int dm_idx = DMBox.SelectedIndex; // Depth Mode
+                                    int cf_idx = CFBox.SelectedIndex; // Color Format
+                                    int cr_idx = CRBox.SelectedIndex; // Color Resolution
+                                    int fr_idx = FRBox.SelectedIndex; // Frame Rate
+
+                                    int tm_idx = TMBox.SelectedIndex; // Tracker Mode
+                                    int om_idx = OMBox.SelectedIndex; // onnx Model
+                                    int so_idx = SOBox.SelectedIndex; // Sensor Orientation
+                                    int gi_idx = (int)GINUD.Value; // GPU Index
+
+                                    // Azure Kinect 정보 추출하여 전역 딕셔너리에 정보 저장
+                                    for (int idx = 0; idx < device_cnt; idx++)
+                                    {
+                                        Device kinect = (Device)device_list[idx]; // 연결되어진 Azure Kinect의 리스트의 원소 호출
+                                        string sync_stat = AKPower.AKSync(kinect); // 해당 Azure Kinect의 Syncronize 상태 호출
+
+                                        // Azure Kinect의 Sensor Configuration 객체 정의
+                                        DeviceConfiguration sensor_config = AKConfig.SensorConfig(dm_idx, cf_idx, cr_idx, fr_idx);
+                                        if (sync_stat.Equals("Master")) // Master 모드일 경우
+                                        {
+                                            sensor_config.WiredSyncMode = WiredSyncMode.Master;
+                                        }
+                                        else if (sync_stat.Equals("Subordinate")) // Subordinate 모드일 경우
+                                        {
+                                            sensor_config.WiredSyncMode = WiredSyncMode.Subordinate;
+                                        }
+                                        else // Standalone 모드일 경우
+                                        {
+                                            sensor_config.WiredSyncMode = WiredSyncMode.Standalone;
+                                        }
+
+                                        TextBlock sync_text = (TextBlock)synctxt_list[idx]; // 해당 Azure Kinect의 Suncronize 상태 표시를 위한 TextBlock UI 객체 호출
+                                        sync_text.Text = sync_stat; // 해당 UI에 Text 쓰기
+
+                                        // Azure Kinect의 Tracker Configuration 객체 정의
+                                        TrackerConfiguration tracker_config = AKConfig.TrackerConfig(tm_idx, om_idx, so_idx, gi_idx);
+                                        // Azure Kinect의 Calibration 객체 정의
+                                        Calibration calibration = kinect.GetCalibration(sensor_config.DepthMode, sensor_config.ColorResolution);
+                                        // Azure Kinect의 Tranformation 객체 정의
+                                        Transformation transfromation = new Transformation(calibration);
+                                        // Azure Kinect의 Tracker 객체 정의
+                                        Tracker kinect_tracker = null;
+                                        try
+                                        {
+                                            // Tracker 객체 생성
+                                            kinect_tracker = Tracker.Create(calibration, tracker_config);
+                                        }
+                                        catch (Exception ex) // Tracker 객체 생성 실패 시
+                                        {
+                                            _ = MessageBox.Show("Fail to Create Tracker Instance!\n\n"+ex.ToString());
+                                            kp_flg = 0;
+                                            break;
+                                        }
+
+                                        // Azure Kinect의 전체적인 정보를 딕셔너리에 저장
+                                        Dictionary<string, object> kinect_info = new Dictionary<string, object>();
+                                        kinect_info.Add("index", idx);
+                                        kinect_info.Add("kinect_device", kinect);
+                                        kinect_info.Add("sync_mode", sync_mode);
+                                        kinect_info.Add("sensor_config", sensor_config);
+                                        kinect_info.Add("tracker_config", tracker_config);
+                                        kinect_info.Add("calibration", calibration);
+                                        kinect_info.Add("transformation", transfromation);
+                                        kinect_info.Add("kinect_tracker", kinect_tracker);
+
+                                        // Azure Kinect의 Syncronize 상태에 따른 전체적인 정보를 임시 리스트에 저장
+                                        if (sync_mode.Equals("Master"))
+                                        {
+                                            mtk_list.Add(kinect_info);
+                                        }
+                                        else if (sync_mode.Equals("Subordinate"))
+                                        {
+                                            sbk_list.Add(kinect_info);
+                                        }
+                                        else
+                                        {
+                                            sak_list.Add(kinect_info);
+                                        }
+                                    }
+
+                                    // Captrue 시작 시 우선 순위를 Subordinate > Standalone > Master로 구성하기 위한 로직
+                                    if (sbk_list.Count > 0)
+                                    {
+                                        kinect_list.Add(sbk_list[0]);
+                                        sync_mode = 1;
+                                    }
+
+                                    if (sak_list.Count > 0)
+                                    {
+                                        for (int sa_idx = 0; sa_idx < sak_list.Count; sa_idx++)
+                                        {
+                                            kinect_list.Add(sak_list[sa_idx]);
+                                        }
+                                    }
+
+                                    if (mtk_list.Count > 0)
+                                    {
+                                        kinect_list.Add(mtk_list[0]);
+                                    }
+
+                                    // 정상적으로 함수가 동작했을 시 UI에 표시하기 위한 로직
+                                    _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                                    {
+                                        PWButton.Background = new SolidColorBrush(Colors.SkyBlue);
+                                        RCButton.IsEnabled = true;
+                                    }));
+                                    kp_flg = 1;
                                 }
-                                else if (sync_mode.Equals("Subordinate"))
+                                catch
                                 {
-                                    sensor_config.WiredSyncMode = WiredSyncMode.Subordinate;
+                                    _ = MessageBox.Show("Fail to Open Azure Kinect!\nAzure Kinect의 연결 상태를 확인 후 다시 시도해 주십시오.");
+                                    kp_flg = 0;
                                 }
-                                else
-                                {
-                                    sensor_config.WiredSyncMode = WiredSyncMode.Standalone;
-                                }
+                                break;
+                        }
+                        break;
 
-                                TextBlock sync_text = (TextBlock)synctxt_list[idx];
-                                sync_text.Text = sync_mode;
+                    case 1: // Azure Kinect Power OFF
+                        // 연결된 Kinect의 수 만큼 Power OFF 수행
+                        for (int idx = 0; idx < device_cnt; idx++)
+                        {
+                            Device kinect = (Device)device_list[idx]; // device 객체의 리스트에서 객체 추출
+                            AKPower.AKPWOFF(kinect); // OFF 작업 수행
 
-                                TrackerConfiguration tracker_config = AKConfig.TrackerConfig(tm_idx, om_idx, so_idx, gi_idx);
+                            // UI에 관련 정보 쵸시
+                            TextBlock sync_text = (TextBlock)synctxt_list[idx];
+                            sync_text.Text = "Offline";
+                        }
 
-                                Calibration calibration = kinect.GetCalibration(sensor_config.DepthMode, sensor_config.ColorResolution);
+                        // UI에 관련 정보 표시
+                        _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                        {
+                            PWButton.Background = new SolidColorBrush(Colors.LightCoral);
+                            RCButton.IsEnabled = false;
 
-                                Transformation transfromation = new Transformation(calibration);
+                            ICButton.Background = new SolidColorBrush(Colors.Beige);
+                            LocationBox.IsEnabled = true;
+                            IDBox.IsEnabled = true;
+                            GameBox.IsEnabled = true;
+                        }));
 
-                                Tracker kinect_tracker = Tracker.Create(calibration, tracker_config);
-
-                                Dictionary<string, object> kinect_info = new Dictionary<string, object>();
-                                kinect_info.Add("index", idx);
-                                kinect_info.Add("kinect_device", kinect);
-                                kinect_info.Add("sync_mode", sync_mode);
-                                kinect_info.Add("sensor_config", sensor_config);
-                                kinect_info.Add("tracker_config", tracker_config);
-                                kinect_info.Add("calibration", calibration);
-                                kinect_info.Add("transformation", transfromation);
-                                kinect_info.Add("kinect_tracker", kinect_tracker);
-
-                                if (sync_mode.Equals("Master"))
-                                {
-                                    mtk_list.Add(kinect_info);
-                                }
-                                else if (sync_mode.Equals("Subordinate"))
-                                {
-                                    sbk_list.Add(kinect_info);
-                                }
-                                else
-                                {
-                                    sak_list.Add(kinect_info);
-                                }
-                            }
-
-                            if (sbk_list.Count > 0)
-                            {
-                                kinect_list.Add(sbk_list[0]);
-                                sync_mode = 1;
-                            }
-
-                            if (sak_list.Count > 0)
-                            {
-                                for (int sa_idx = 0; sa_idx < sak_list.Count; sa_idx++)
-                                {
-                                    kinect_list.Add(sak_list[sa_idx]);
-                                }
-                            }
-
-                            if (mtk_list.Count > 0)
-                            {
-                                kinect_list.Add(mtk_list[0]);
-                            }
-
-                            _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-                            {
-                                PWButton.Background = new SolidColorBrush(Colors.SkyBlue);
-                                RCButton.IsEnabled = true;
-                            }));
-                            break;
-                    }
-                    break;
-
-                // Azure Kinect Power OFF
-                case 1:
-                    // 연결된 Kinect의 수 만큼 Power OFF 수행
-                    for (int idx = 0; idx < device_cnt; idx++)
-                    {
-                        Device kinect = (Device)device_list[idx];
-                        AKPower.AKPWOFF(kinect);
-
-                        TextBlock sync_text = (TextBlock)synctxt_list[idx];
-                        sync_text.Text = "Offline";
-                    }
-
-                    _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-                    {
-                        PWButton.Background = new SolidColorBrush(Colors.LightCoral);
-                        RCButton.IsEnabled = false;
-
-                        ICButton.Background = new SolidColorBrush(Colors.Beige);
-                        LocationBox.IsEnabled = true;
-                        IDBox.IsEnabled = true;
-                        GameBox.IsEnabled = true;
-                    }));
-
-                    kinect_list.Clear();
-                    sync_mode = 0;
-                    kp_flg = 0;
-                    ic_flg = 0;
-                    break;
+                        kinect_list.Clear();
+                        sync_mode = 0;
+                        kp_flg = 0;
+                        ic_flg = 0;
+                        break;
+                }
             }
+            catch (Exception ex)
+            {
+                _ = MessageBox.Show(ex.ToString());
+            }
+            
         }
 
         // Azure Kinect Record Control //
+        // Azure kinect에서 Capture를 시작하여 데이터를 획득하는 함수
         public int kr_flg = 0;
         public bool record_chk = false;
         private void RCButton_Click(object sender, RoutedEventArgs e)
@@ -430,32 +505,39 @@ namespace AzureKinectTool
             {
                 // Azure Kinect Record Start
                 case 0:
+                    // Data 저장 활성화 여부에 따른 변수 값 설정 조건문
                     if (SCSwitch.IsOn)
                     {
+                        // Data 저장이 활성화 되어 있을 때에는 대상자 정보가 정확히 입력이 되어있는지 확인하여 전달
                         ic_flg = ic_flg;
                     }
                     else
                     {
+                        // Data 저장이 비활성화 상태이면 1로 고정값을 주어 Capture를 시작하게 변수 전달
                         ic_flg = 1;
                     }
+
                     switch (ic_flg)
                     {
-                        case 0:
+                        case 0: // 대상자 정보가 정상적으로 확인되어있지 않았을 경우 메세지 출력
                             _ = MessageBox.Show("Subject information not set.\nPlease Setting Subject Information!");
                             break;
 
                         case 1:
+                            // 대상자 정보 확인 후 Data 수집 전 Azure Kinect의 위치가 중복되어 있는지 확인
                             if (SCSwitch.IsOn && kinect_list.Count > 1 && KLocationBox_1.SelectedIndex == KLocationBox_2.SelectedIndex)
                             {
                                 _ = MessageBox.Show("Azure Kinect Location is Duplicated!\nPlease set Azure Kinect Location!");
                             }
                             else
                             {
-                                kr_flg = 1;
+                                kr_flg = 1; // Kinect Record 상태 확인 변수
                                 record_chk = true;
 
+                                // Azure Kinect의 Capture Loop 함수 비동기로 호출
                                 Task kinect_record_start = Task.Run(() => KinectRecordStart());
 
+                                // UI 관련 Control 부분(촬영 표시 버튼 색상 및 Power 버튼 비활성화, Record 버튼 색상 Control)
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
                                     if (SCSwitch.IsOn)
@@ -481,8 +563,11 @@ namespace AzureKinectTool
                 // Azure Kinect Record Stop
                 case 1:
                     record_chk = false;
-                    Task kinect_record_stop = Task.Run(() => KinectRecordStop());
+                    // Azure Kinect 촬영 종료 함수 호출
+                    //Task kinect_record_stop = Task.Run(() => KinectRecordStop());
+                    KinectRecordStop();
 
+                    // 관련 UI Control
                     _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                     {
                         if (init_device_cnt.Equals(1))
@@ -518,24 +603,26 @@ namespace AzureKinectTool
         }
 
         // Azure Kinect Record Start Function //
-        public Stopwatch stop_watch = new Stopwatch();
+        // Azure Kinect의 데이터 수집을 위한 Loop 부분 작성 함수
+        public Stopwatch stop_watch = new Stopwatch(); // 촬영 시간을 표시하기 위한 Stopwatch 객체
         public int last_frame_num = 0;
         public Dictionary<int, string> capture_time_dict = new Dictionary<int, string>();
         public void KinectRecordStart()
         {
             int k_cnt = kinect_list.Count;
             capture_time_dict = new Dictionary<int, string>();
-
+            // Azure Kinect 2대 이상 및 Syncronize Mode 사용 시
             if (sync_mode > 0 && k_cnt > 1)
             {
-                Dictionary<string, object> sbk_info = (Dictionary<string, object>)kinect_list[0];
-                int sb_idx = (int)sbk_info["index"];
-                Device sb_kinect = (Device)sbk_info["kinect_device"];
-                DeviceConfiguration sbs_config = (DeviceConfiguration)sbk_info["sensor_config"];
-                Tracker sb_tracker = (Tracker)sbk_info["kinect_tracker"];
-                Calibration sb_calibration = (Calibration)sbk_info["calibration"];
-                Transformation sb_transformation = (Transformation)sbk_info["transformation"];
+                Dictionary<string, object> sbk_info = (Dictionary<string, object>)kinect_list[0]; // Subordinate Azure Kinect 정보를 딕셔너리에서 호출
+                int sb_idx = (int)sbk_info["index"]; // Subordinate Azure Kinect가 연결되어 있는 인덱스 정보 추출
+                Device sb_kinect = (Device)sbk_info["kinect_device"]; // Subordinate Azure Kinect의 device 객체 추출
+                DeviceConfiguration sbs_config = (DeviceConfiguration)sbk_info["sensor_config"]; // Subordinate Azure Kinect의 설정 정보 객체 추출
+                Tracker sb_tracker = (Tracker)sbk_info["kinect_tracker"]; // Subordinate Azure Kinect의Tracker 객체 추출
+                Calibration sb_calibration = (Calibration)sbk_info["calibration"]; // Subordinate Azure Kinect의 Calibration 객체 추출
+                Transformation sb_transformation = (Transformation)sbk_info["transformation"]; // Subordinate Azure Kinect의 Transformation 객체 추출
 
+                // Subordinate Azure Kinect 위치 반환
                 ComboBox sb_loc_combox = (ComboBox)loctxt_list[sb_idx];
                 int sb_loc_idx = 0;
                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
@@ -560,14 +647,15 @@ namespace AzureKinectTool
                         break;
                 }
 
-                Dictionary<string, object> mtk_info = (Dictionary<string, object>)kinect_list[1];
-                int mt_idx = (int)mtk_info["index"];
-                Device mt_kinect = (Device)mtk_info["kinect_device"];
-                DeviceConfiguration mts_config = (DeviceConfiguration)mtk_info["sensor_config"];
-                Tracker mt_tracker = (Tracker)mtk_info["kinect_tracker"];
-                Calibration mt_calibration = (Calibration)mtk_info["calibration"];
-                Transformation mt_transformation = (Transformation)mtk_info["transformation"];
+                Dictionary<string, object> mtk_info = (Dictionary<string, object>)kinect_list[1]; // Master Azure Kinect 정보를 딕셔너리에서 호출
+                int mt_idx = (int)mtk_info["index"]; // Master Azure Kinect가 연결되어 있는 인덱스 정보 추출
+                Device mt_kinect = (Device)mtk_info["kinect_device"]; // Master Azure Kinect의 device 객체 추출
+                DeviceConfiguration mts_config = (DeviceConfiguration)mtk_info["sensor_config"]; // Master Azure Kinect의 설정 정보 객체 추출
+                Tracker mt_tracker = (Tracker)mtk_info["kinect_tracker"]; // Master Azure Kinect의Tracker 객체 추출
+                Calibration mt_calibration = (Calibration)mtk_info["calibration"]; // Master Azure Kinect의 Calibration 객체 추출
+                Transformation mt_transformation = (Transformation)mtk_info["transformation"]; // Master Azure Kinect의 Transformation 객체 추출
 
+                // Master Azure Kinect 위치 반환
                 ComboBox mt_loc_combox = (ComboBox)loctxt_list[mt_idx];
                 int mt_loc_idx = 0;
                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
@@ -592,6 +680,7 @@ namespace AzureKinectTool
                         break;
                 }
 
+                // Date 저장 경로 변수 초기화
                 var sb_ci_path = "";
                 var mt_ci_path = "";
                 var sb_di_path = "";
@@ -606,7 +695,7 @@ namespace AzureKinectTool
                 var an_path = "";
                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
-                    if (SCSwitch.IsOn)
+                    if (SCSwitch.IsOn) // Data 저장 활성화 되어있을 경우 각 경로 변수 생성 후 폴더 생성
                     {
                         // Save Calibration Information
                         var cd_path = System.IO.Path.Combine(trg_path, "0_calibration");
@@ -739,23 +828,29 @@ namespace AzureKinectTool
                     }
                 }));
 
+                // Subordinate Azure Kinect 우선 Capture 시작하여 대기상태 유지
                 sb_kinect.StartCameras(sbs_config);
                 Thread.Sleep(300);
 
+                // Mater Azure Kinect의 Capture를 시작하면서 Subordinate의 대기상태를 활성상태로 전환하여 Mater와 같은 타이밍에 Capture 수행
                 mt_kinect.StartCameras(mts_config);
-                stop_watch.Start();
+
+                stop_watch.Start(); // Stopwatch 시작
                 int frame_cnt = 0;
+                // 무한 루프를 이용하여 Capture 정보 추출
                 while (record_chk)
                 {
+                    // 촬영시간을 UI에 표현하기 위한 부분
                     TimeSpan time_span = stop_watch.Elapsed;
                     string elapsed_time = string.Format("{0:00}:{1:00}.{2:00}",
                         time_span.Minutes, time_span.Seconds, time_span.Milliseconds / 10);
-
                     string date_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentUICulture.DateTimeFormat);
                     capture_time_dict.Add(frame_cnt, date_time);
 
+                    // Capture 객체 초기화
                     Microsoft.Azure.Kinect.Sensor.Capture mt_capture = null;
                     Microsoft.Azure.Kinect.Sensor.Capture sb_capture = null;
+                    // 병렬로 함수를 동작시켜서 Mater와 Subordinate의 Capture 정보를 동시에 추출
                     Parallel.Invoke(
                         () =>
                         {
@@ -788,11 +883,13 @@ namespace AzureKinectTool
                             }));
                         }
                     );
+                    // 정상적으로 Mater와 Subordinate의 Capture가 수행 되었을 경우의 조건문으로 UI에 이미지 표현 및 저장 동작 함수 호출
                     if (mt_capture != null && sb_capture != null)
                     {
                         string capture_time = DateTime.Now.ToString("yyMMdd_HHmmss_ffff", CultureInfo.CurrentUICulture.DateTimeFormat);
                         Parallel.Invoke(
                             () => {
+                                // Subordinate의 Color Image 처리 구문
                                 Microsoft.Azure.Kinect.Sensor.Image sb_cimg = sb_capture.Color;
                                 WriteableBitmap sb_color_wbitmap = AKImageConvert.ColorConvert(sb_cimg);
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
@@ -809,7 +906,7 @@ namespace AzureKinectTool
                                             object[] sb_ci_file_arr = { sb_ci_name, "jpg" };
                                             string sb_ci_file = string.Join(".", sb_ci_file_arr);
 
-                                            var sb_cimg_path = System.IO.Path.Combine(sb_ci_path, sb_ci_file);
+                                            var sb_cimg_path = Path.Combine(sb_ci_path, sb_ci_file);
 
                                             Task sb_save_color = Task.Run(() => AKDataSave.AKColorImage(sb_cimg_path, sb_color_wbitmap));
                                         }
@@ -817,6 +914,7 @@ namespace AzureKinectTool
                                 }));
                             },
                             () => {
+                                // Master의 Color Image 처리 구문
                                 Microsoft.Azure.Kinect.Sensor.Image mt_cimg = mt_capture.Color;
                                 WriteableBitmap mt_color_wbitmap = AKImageConvert.ColorConvert(mt_cimg);
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
@@ -843,6 +941,7 @@ namespace AzureKinectTool
                             () => {
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    // Subordinate의 Depth Image 처리 구문
                                     if (SCSwitch.IsOn)
                                     {
                                         if (DISwitch.IsOn)
@@ -874,6 +973,7 @@ namespace AzureKinectTool
                             () => {
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    // Master의 Depth Image 처리 구문
                                     if (SCSwitch.IsOn)
                                     {
                                         if (DISwitch.IsOn)
@@ -905,6 +1005,7 @@ namespace AzureKinectTool
                             () => {
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    // Subordinate의 IR Image 처리 구문
                                     if (SCSwitch.IsOn)
                                     {
                                         if (IISwitch.IsOn)
@@ -926,6 +1027,7 @@ namespace AzureKinectTool
                             () => {
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    // Master의 IR Image 처리 구문
                                     if (SCSwitch.IsOn)
                                     {
                                         if (IISwitch.IsOn)
@@ -948,6 +1050,7 @@ namespace AzureKinectTool
                             {
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    // Subordinate의 joint data 처리 구문
                                     if (SCSwitch.IsOn)
                                     {
                                         if (JDSwitch.IsOn)
@@ -969,6 +1072,7 @@ namespace AzureKinectTool
                             {
                                 _ = Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
+                                    // Master의 joint data 처리 구문
                                     if (SCSwitch.IsOn)
                                     {
                                         if (JDSwitch.IsOn)
@@ -996,6 +1100,7 @@ namespace AzureKinectTool
                     mt_capture.Dispose();
                 }
             }
+            // Azure Kinect 1대만 사용 시
             else if (k_cnt == 1)
             {
                 int frame_cnt = 0;
@@ -1271,6 +1376,7 @@ namespace AzureKinectTool
                     capture.Dispose();
                 }
             }
+            // Azure Kinect 2대를 Standalone으로 사용 시
             else
             {
                 Dictionary<string, object> k1_info = (Dictionary<string, object>)kinect_list[0];
@@ -1741,6 +1847,7 @@ namespace AzureKinectTool
         }
 
         // Azure Kinect Record Stop Function //
+        // Azure Kinect Capture 종료 함수
         public double real_fps = 0.0;
         public void KinectRecordStop()
         {
