@@ -12,22 +12,49 @@
 - MainWindow.xaml : UI 구성 xaml 파일
 - MainWindow.xaml.cs : WPF Main 프로그램 동작 제어 및 구성 파일
 
-# 데이터 유형
-- Color Image(jpg)
-- Depth Image(16bit png)
-- Transformed Depth Image(16bit png)
-- Infrared Image(16bit png)
-- Calibration Information(json)
-- Joint Tracker Data(json)
-- Color Video(mp4) --> FFMPEG Library 이용
-- CoCo Dataset Format Annotation Data(json)
-
 # 시스템 요구사항
 - GPU : RTX 3080 이상
 - CPU : intel i5, i7 10th 이상
 - RAM : 16GB 이상
 - SSD 추천(1Frame마다 Data를 저장하기에 디스크의 읽기/쓰기 기능이 원활해야함)
 - C드라이브에 FFMPEG 
+
+# 데이터 유형
+- Color Image(jpg)
+- Depth Image(16bit png)
+- Transformed Depth Image(16bit png)
+- Infrared Image(16bit png)
+- Calibration Information(json)
+  - Id : Azure Kinect Index ID
+  - Location : Azure Kinect Setting Location
+  - Serial_number : Azure Kinect Serial Number
+  - Extrinsics : Extrinsics Information(rotation, translation, metric radius, resolution width & height)
+  - Instrinsics : Instrinsics Information(color & depth focal information)
+  - Convert_mode : Convert Mode Information
+- Joint Tracker Data(json)
+  - categories
+    - supercategory : “person”
+    - id : category 의 id
+    - name : “person”
+    - keypoints : joint의 순서 및 명칭의 리스트
+    - skeleton : skeleton 구성 관계도
+    - vector_angle : vector 각도 값의 순서
+    - axies : joint axis의 순서
+  - annotations
+    - camera_id : Azure Kinect 매칭 번호
+    - video_id : video 항목과 매칭 정보
+    - v_annotation
+      - category_id : categories의 매칭 번호
+      - id : annotation ID
+      - body_id : tracker의 body id
+      - target : 촬영 대상자인지 여부
+      - iscrowd
+      - keypoints : joint 위치 정보
+      - Vector_angle : joint 각도 정보
+      - area
+      - bbox
+- Color Video(mp4) --> FFMPEG Library 이용
+- CoCo Dataset Format Annotation Data(json)
 
 # 사용 가이드
 1. Setting버튼을 선택하여 Azure Kinect Dk의 Sensor 및 Tracker, Data 저장소 위치를 설정한다.
