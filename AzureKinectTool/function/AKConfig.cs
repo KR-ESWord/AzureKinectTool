@@ -11,10 +11,12 @@ namespace AzureKinectTool.function
 {
     public class AKConfig
     {
+        // Azure Kinect Sensor Configuration
         public DeviceConfiguration SensorConfig(int dm_idx, int cf_idx, int cr_idx, int fr_idx)
         {
             DeviceConfiguration sensor_config = new DeviceConfiguration();
 
+            // Depth Mode
             switch (dm_idx)
             {
                 case 0:
@@ -34,6 +36,7 @@ namespace AzureKinectTool.function
                     break;
             }
 
+            // Color Format
             switch (cf_idx)
             {
                 case 0:
@@ -53,6 +56,7 @@ namespace AzureKinectTool.function
                     break;
             }
 
+            // Color Resolution
             switch (cr_idx)
             {
                 case 0:
@@ -80,6 +84,7 @@ namespace AzureKinectTool.function
                     break;
             }
 
+            // Frame Rate
             switch (fr_idx)
             {
                 case 0:
@@ -100,10 +105,12 @@ namespace AzureKinectTool.function
             return sensor_config;
         }
 
+        // Azure Kinect Tracker Configuration
         public TrackerConfiguration TrackerConfig(int tm_idx, int om_idx, int so_idx, int gi_idx)
         {
             TrackerConfiguration tracker_config = new TrackerConfiguration();
 
+            // Tracker Process Mode
             switch (tm_idx)
             {
                 case 0:
@@ -123,6 +130,7 @@ namespace AzureKinectTool.function
                     break;
             }
 
+            // Tracker ONNX Model
             switch (om_idx)
             {
                 case 0:
@@ -134,6 +142,7 @@ namespace AzureKinectTool.function
                     break;
             }
 
+            // Sensor Orientation
             switch (so_idx)
             {
                 case 0:
@@ -153,6 +162,7 @@ namespace AzureKinectTool.function
                     break;
             }
 
+            // GPU Index
             tracker_config.GpuDeviceId = gi_idx;
 
             return tracker_config;
