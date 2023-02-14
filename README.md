@@ -20,4 +20,14 @@
 
 # 사용 가이드
 1. Setting버튼을 선택하여 Azure Kinect Dk의 Sensor 및 Tracker, Data 저장소 위치를 설정한다.
-2. ![image](https://user-images.githubusercontent.com/59715960/218610100-0389adf1-1cd8-4c37-9f0c-4603a7da90fa.png)
+![image](https://user-images.githubusercontent.com/59715960/218610162-756ad42e-5800-4295-9a09-2bb33769b88f.png)
+
+2. Data 저장 기능 활성화 여부에 관한 토글 버튼으로 Deactivate 상태로 전환해준다.
+![image](https://user-images.githubusercontent.com/59715960/218610100-0389adf1-1cd8-4c37-9f0c-4603a7da90fa.png)
+
+3. Azure Kinect DK의 전원을 켜주기 위하여 왼쪽의 버튼을 먼저 누르고 파란불로 전환이 되었다면, 우측의 촬영버튼을 눌러서 촬영을 시작한다.
+![image](https://user-images.githubusercontent.com/59715960/218610280-6f3caa13-80dc-43bf-9b6f-114747c44935.png)
+
+4. 촬영을 하면서 Azure Kinect DK의 정상 동작 여부 및 촬영 각도, 위치, 조명 등의 환경을 세팅한다.
+
+5. 
