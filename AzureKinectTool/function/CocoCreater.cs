@@ -20,14 +20,15 @@ namespace AzureKinectTool.function
             Dictionary<string, string> empty_dict = new Dictionary<string, string>();
             ArrayList empty_list = new ArrayList();
 
-            var basic_path = Path.Combine(storage, "AzureKinectData",subject_id, date, game_info);
+            var basic_path = Path.Combine(storage, "AzureKinectData",subject_id, date, game_info); // 저장 경로 지정
             DirectoryInfo basic_dir = new DirectoryInfo(basic_path);
-            if (!basic_dir.Exists)
+            if (!basic_dir.Exists) // 여기서 저장 경로의 폴더가 없는 경우는 Data 저장을 비활성화 하였기에 함수를 바로 빠져나오도록 구성
             {
                 return;
             }
             else
             {
+                // Calibration 정보 추출
                 ArrayList calib_info = new ArrayList();
                 var calib_path = Path.Combine(basic_path, "0_calibration");
                 DirectoryInfo calib_dir = new DirectoryInfo(calib_path);
@@ -97,6 +98,7 @@ namespace AzureKinectTool.function
                     }
                 }
 
+                // Image 목록 정보 추출
                 ArrayList images_list = new ArrayList();
                 var color_path = Path.Combine(basic_path, "1_color");
                 DirectoryInfo color_dir = new DirectoryInfo(color_path);
@@ -167,6 +169,7 @@ namespace AzureKinectTool.function
                     }
                 }
 
+                // Video 목록 정보 추출
                 ArrayList video_list = new ArrayList();
                 var video_path = Path.Combine(basic_path, "6_video");
                 DirectoryInfo video_dir = new DirectoryInfo(video_path);
@@ -225,6 +228,7 @@ namespace AzureKinectTool.function
                     }
                 }
 
+                // joint에서 카테고리 목록 정보 추출
                 ArrayList category_list = new ArrayList();
                 int cat_flag = 0;
                 ArrayList joint_list = new ArrayList();
@@ -353,6 +357,7 @@ namespace AzureKinectTool.function
                     }
                 }
 
+                // coco dataset Info 항목 구성
                 string date_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentUICulture.DateTimeFormat);
                 Dictionary<string, string> info_dict = new Dictionary<string, string>();
                 info_dict.Add("desciption", "Physical Activity Dataset");
@@ -360,8 +365,7 @@ namespace AzureKinectTool.function
                 info_dict.Add("contributor", "BRFrame, Hanyang Digital Healthcare Center, Kookmin University, HUFS");
                 info_dict.Add("date_created", date_time);
 
-                
-
+                // coco dataset 구성
                 coco_dict.Add("info",info_dict);
                 coco_dict.Add("lisences",empty_list);
                 coco_dict.Add("categories", category_list[0]);
