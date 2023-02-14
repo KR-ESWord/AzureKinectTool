@@ -13,6 +13,7 @@ namespace AzureKinectTool.function
 {
     public class AKImageConvert
     {
+        // Azure Kinect SDK의 Image의 Color 객체를 Writeablebitmap 객체로 변환화는 과정
         public WriteableBitmap ColorConvert(Image color_image)
         {
             int width = color_image.WidthPixels;
@@ -39,6 +40,7 @@ namespace AzureKinectTool.function
             return color_wbitmap;
         }
 
+        // Azure Kinect SDK의 Image의 Depth 객체를 Writeablebitmap 객체로 변환화는 과정
         public WriteableBitmap DepthConvert(Image depth_image)
         {
             int width = depth_image.WidthPixels;
@@ -65,8 +67,10 @@ namespace AzureKinectTool.function
             return depth_wbitmap;
         }
 
+        // Azure Kinect SDK의 Image의 Transformed Depth 객체 생성 후 Writeablebitmap 객체로 변환화는 과정
         public WriteableBitmap TrDepthConvert(Transformation transformation, Image depth_image)
         {
+            // 일반 Depth Image 객체를 transformation 함수를 이용하여 Transformed Depth Image 객체 생성
             Image tr_depth_image = transformation.DepthImageToColorCamera(depth_image);
 
             int width = tr_depth_image.WidthPixels;
@@ -93,6 +97,7 @@ namespace AzureKinectTool.function
             return trdepth_wbitmap;
         }
 
+        // Azure Kinect SDK의 Image의 IR 객체를 Writeablebitmap 객체로 변환화는 과정
         public WriteableBitmap IRConvert(Image ir_image)
         {
             int width = ir_image.WidthPixels;
