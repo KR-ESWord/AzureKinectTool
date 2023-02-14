@@ -331,8 +331,8 @@
                                         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
                                     </GroupBox.Resources>
                                     <ComboBox Name="LocationBox" Width="150" Height="45" FontSize="22">
-                                        <ComboBoxItem Content="DHC" IsSelected="True" FontSize="22"/>
-                                        <ComboBoxItem Content="HMC" FontSize="22"/>
+                                        <ComboBoxItem Content="DHC" FontSize="22"/>
+                                        <ComboBoxItem Content="HMC" IsSelected="True" FontSize="22"/>
                                         <ComboBoxItem Content="SMC" FontSize="22"/>
                                     </ComboBox>
                                 </GroupBox>
