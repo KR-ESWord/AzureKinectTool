@@ -1,6 +1,16 @@
 # AzureKinectTool
 - Azure Kinect DK를 최대 2대를 사용하여 Syncronize 및 Standalone Mode로 동작시켜 설정한 Frame Rate로 촬영을 하면서 1 Frame 마다 데이터를 수집하는 도구
 
+# 소스 코드
+- AKCalibration.cs : Azure Kinect DK의 Calibration 정보 추출
+- AKConfig.cs : Azure Kinect DK의 Sensor 및 Tracker 설정
+- AKDataSave.cs : 촬영 Data 저장
+- AKImageConvert.cs : Azure Kinect SDK의 Image 객체를 WPF의 Writeablebitmap 객체로 변환
+- AKPower.cs : Azure Kinect DK의 전원 On/Off
+- AKTracker.cs : Azure Kinect Body Tracking SDk의 Tracker 정보 추출
+- CocoCreater.cs : 전체 수집 Data를 하나의 coco dataset format으로 annotaton json파일로 정보를 수합
+- MainWindow.xaml : UI 구성 xaml 파일
+- MainWindow.xaml.cs : WPF Main 프로그램 동작 제어 및 구성 파일
 
 # 데이터 유형
 - Color Image(jpg)
