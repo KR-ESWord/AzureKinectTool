@@ -72,6 +72,8 @@ namespace AzureKinectTool.function
          */
         public void AKVideo(double real_fps, string ci_path, string cv_path)
         {
+            // FFMPEG Direct
+            /**/
             ProcessStartInfo cmd = new ProcessStartInfo();
             Process process = new Process();
 
@@ -93,11 +95,6 @@ namespace AzureKinectTool.function
 
             process.StandardInput.Write(create_video_cmd + Environment.NewLine);
             process.StandardInput.Close();
-        }
-
-        public void AKCaptureMeta()
-        {
-
         }
     }
 }
