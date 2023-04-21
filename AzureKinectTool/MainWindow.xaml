@@ -326,7 +326,7 @@
                     <Grid Width="950">
                         <GroupBox Header="subject information">
                             <StackPanel Orientation="Horizontal">
-                                <GroupBox Header="Location" Margin="100,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
+                                <GroupBox Header="Location" Margin="50,0,0,0" Style="{DynamicResource MahApps.Styles.GroupBox.Clean}">
                                     <GroupBox.Resources>
                                         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Clean/Controls.xaml" />
                                     </GroupBox.Resources>
@@ -386,6 +386,8 @@
                                 </Button>
 
                                 <mah:ToggleSwitch Name="SCSwitch" Margin="50,0,0,0" IsOn="True" Toggled="SCSwitch_Toggled" OnContent="Activate" OffContent="DeActivate"/>
+                                
+                                <controls:ProgressRing IsActive="False" Visibility="Collapsed" Name="progress1"/>
 
                             </StackPanel>
                         </GroupBox>
