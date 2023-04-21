@@ -316,6 +316,7 @@ namespace AzureKinectTool.function
                                                 v_anno_dict.Add("category_id", (int)v_annotations[v_anno_idx]["category_id"]);
                                                 v_anno_dict.Add("id", (int)v_annotations[v_anno_idx]["id"]);
                                                 v_anno_dict.Add("image_id", frame_num);
+                                                v_anno_dict.Add("data_captured, (string)v_annotations[v_anno_idx]["data_captured"]);
                                                 v_anno_dict.Add("iscrowd", 1);
                                                 v_anno_dict.Add("keypoints_2d",(int)v_annotations[v_anno_idx]["keypoints_2d"]);
                                                 v_anno_dict.Add("keypoints_3d",(int)v_annotations[v_anno_idx]["keypoints_3d"]);
@@ -333,6 +334,7 @@ namespace AzureKinectTool.function
                                             v_anno_dict.Add("category_id", 0);
                                             v_anno_dict.Add("id", anno_id);
                                             v_anno_dict.Add("image_id", frame_num);
+                                            v_anno_dict.Add("data_captured, "None");
                                             v_anno_dict.Add("iscrowd", 1);
                                             v_anno_dict.Add("keypoints_2d", 0);
                                             v_anno_dict.Add("keypoints_3d", 0);
