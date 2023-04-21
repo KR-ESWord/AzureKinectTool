@@ -1055,7 +1055,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string sb_annotation_json = Task.Run(() => AKTracker.PopTracker(sb_camera_id, frame_cnt, sb_tracker, sb_calibration)).Result;
+                                            string sb_annotation_json = Task.Run(() => AKTracker.PopTracker(sb_camera_id, frame_cnt, date_time, sb_tracker, sb_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, sb_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -1077,7 +1077,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string mt_annotation_json = Task.Run(() => AKTracker.PopTracker(mt_camera_id, frame_cnt, mt_tracker, mt_calibration)).Result;
+                                            string mt_annotation_json = Task.Run(() => AKTracker.PopTracker(mt_camera_id, frame_cnt, date_time, mt_tracker, mt_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, mt_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -1354,7 +1354,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string annotation_json = Task.Run(() => AKTracker.PopTracker(cameras_id, frame_cnt, tracker, calibration)).Result;
+                                            string annotation_json = Task.Run(() => AKTracker.PopTracker(cameras_id, frame_cnt, date_time, tracker, calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -1800,7 +1800,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string k1_annotation_json = Task.Run(() => AKTracker.PopTracker(k1_camera_id, frame_cnt, k1_tracker, k1_calibration)).Result;
+                                            string k1_annotation_json = Task.Run(() => AKTracker.PopTracker(k1_camera_id, frame_cnt, date_time, k1_tracker, k1_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, k1_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
@@ -1821,7 +1821,7 @@ namespace AzureKinectTool
                                     {
                                         if (JDSwitch.IsOn)
                                         {
-                                            string k2_annotation_json = Task.Run(() => AKTracker.PopTracker(k2_camera_id, frame_cnt, k2_tracker, k2_calibration)).Result;
+                                            string k2_annotation_json = Task.Run(() => AKTracker.PopTracker(k2_camera_id, frame_cnt, date_time, k2_tracker, k2_calibration)).Result;
 
                                             object[] jd_name_arr = { subject, date, k2_kinect_loc, game_info, "joint", frame_cnt.ToString().PadLeft(9, '0') };
                                             string jd_name = string.Join("_", jd_name_arr);
