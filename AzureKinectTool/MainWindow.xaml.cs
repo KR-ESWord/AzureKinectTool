@@ -564,6 +564,8 @@ namespace AzureKinectTool
                 case 1:
                     record_chk = false;
                     // Azure Kinect 촬영 종료 함수 호출
+                    progress1.IsActive = true;
+                    progress1.Visibility = Visibility.Visible;
                     //Task kinect_record_stop = Task.Run(() => KinectRecordStop());
                     KinectRecordStop();
 
@@ -597,6 +599,10 @@ namespace AzureKinectTool
 
                     // COCO Data Create Task
                     Task coco_create = Task.Run(() => CocoCreater.CocoSet(storage, subject, date, game_info, capture_time_dict));
+                    
+                    Thread.Sleep(3000);
+                    progress1.IsActive = false;
+                    progress1.Visibility = Visibility.Collapsed;
 
                     break;
             }
