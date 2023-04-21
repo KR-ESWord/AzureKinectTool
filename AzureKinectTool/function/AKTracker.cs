@@ -16,7 +16,7 @@ namespace AzureKinectTool.function
 {
     public class AKTracker
     {
-        public string PopTracker(int camera_id, int frame_num, Tracker tracker, Calibration calibration)
+        public string PopTracker(int camera_id, int frame_num, string date_time, Tracker tracker, Calibration calibration)
         {
             Dictionary<string, object> trg_dict = new Dictionary<string, object>();
             Dictionary<string, object> category_dict = new Dictionary<string, object>();
@@ -179,6 +179,7 @@ namespace AzureKinectTool.function
                         id_dict.Add("category_id", 1);
                         id_dict.Add("id", frame_num);
                         id_dict.Add("body_id", id.ToString());
+                        id_dict.Add("data_captured", date_time);
                         id_dict.Add("target", target_chk.ToString());
                         id_dict.Add("iscrowd", 1);
 
